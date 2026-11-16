@@ -33,7 +33,8 @@ export default function Home({ c }: { c: HomeContent }) {
       <section className="hero">
         <p className="kicker">{c.hero.kicker}</p>
         <h1 className="hero-title">
-          <span>{c.hero.before}</span> <del>{c.hero.struck}</del>{" "}
+          {/* The struck word is the joke, not the sentence: a screen reader gets the corrected line. */}
+          <span>{c.hero.before}</span> <del aria-hidden="true">{c.hero.struck}</del>{" "}
           <ins>{c.hero.inserted}</ins>{" "}
           <span>{c.hero.after}</span>
         </h1>
