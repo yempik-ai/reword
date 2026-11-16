@@ -1,0 +1,38 @@
+{
+  "name": "reword",
+  "version": "0.1.0",
+  "description": "Click a sentence on your site and reword it. The edit lands in your source file, git is the draft, your coding agent translates it and opens the pull request.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/yempik-ai/reword.git" },
+  "homepage": "https://yempik-ai.github.io/reword/",
+  "keywords": ["in-place editing", "inline editor", "visual editing", "nextjs", "git-based cms", "no cms", "personal website", "i18n", "ai agents", "t3 code", "claude code", "codex"],
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "dev": "next dev",
+    "edit": "REWORD=1 next dev --hostname 127.0.0.1",
+    "draft": "node scripts/draft.ts",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  }
+}

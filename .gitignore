@@ -1,0 +1,11 @@
+/node_modules
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+.env*
+!.env.example
+.vercel
+# reword: the log of an agent started with a custom command
+/.reword/

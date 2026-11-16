@@ -1,0 +1,405 @@
+/* ---------------------------------------------------------------------------
+   reword's own interface (`npm run edit` only). Imported by Reword.tsx, so it
+   ships with that chunk and never reaches a production build. It brings its
+   own look, so it reads the same on any site: a dark bar with mono labels (a
+   devtool) and a paper sheet set in serif (a proof). Change the variables
+   below to restyle it.
+--------------------------------------------------------------------------- */
+
+.rw-bar,
+.rw-sheet {
+  --rw-ink: #121210;
+  --rw-paper: #f7f4ec;
+  --rw-accent: #ff5433;
+  --rw-accent-ink: #c8321a; /* the accent as text on paper */
+  --rw-dim: rgba(247, 244, 236, 0.62);
+  --rw-rule: rgba(247, 244, 236, 0.16);
+  --rw-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --rw-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
+}
+
+/* ------------------------------- the bar -------------------------------- */
+
+.rw-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  translate: -50% 0;
+  z-index: 2147483000;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  background: var(--rw-ink);
+  color: var(--rw-paper);
+  border: 1px solid rgba(247, 244, 236, 0.22);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  font: 500 12px / 1.4 var(--rw-mono);
+  letter-spacing: 0.01em;
+  text-align: left;
+}
+
+.rw-bar button,
+.rw-sheet button {
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.rw-bar :focus-visible,
+.rw-sheet :focus-visible {
+  outline: 2px solid var(--rw-accent);
+  outline-offset: 2px;
+}
+
+.rw-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+}
+
+.rw-mode {
+  display: flex;
+  padding: 2px;
+  background: rgba(247, 244, 236, 0.1);
+  border-radius: 8px;
+}
+
+.rw-mode button {
+  min-height: 28px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--rw-dim);
+}
+
+.rw-mode button[aria-pressed="true"] {
+  background: var(--rw-paper);
+  color: var(--rw-ink);
+}
+
+.rw-locale {
+  padding: 3px 7px;
+  border: 1px solid var(--rw-rule);
+  border-radius: 6px;
+  color: var(--rw-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rw-status {
+  min-width: 24ch;
+  margin: 0;
+  color: var(--rw-dim);
+}
+
+.rw-review,
+.rw-send {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--rw-accent);
+  color: var(--rw-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rw-review:disabled,
+.rw-send:disabled {
+  background: rgba(247, 244, 236, 0.1);
+  color: var(--rw-dim);
+  cursor: default;
+}
+
+/* ---------------------- the text being edited (bar) ---------------------- */
+
+.rw-session {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rw-rule);
+}
+
+.rw-session p {
+  margin: 0;
+}
+
+.rw-where {
+  overflow-wrap: anywhere;
+}
+
+.rw-keys {
+  color: var(--rw-dim);
+}
+
+.rw-keys kbd {
+  font: inherit;
+  padding: 1px 5px;
+  margin-right: 3px;
+  border: 1px solid var(--rw-rule);
+  border-radius: 4px;
+}
+
+.rw-keys kbd:not(:first-child) {
+  margin-left: 10px;
+}
+
+.rw-error {
+  color: var(--rw-accent);
+}
+
+.rw-places {
+  display: grid;
+  gap: 3px;
+  max-height: 132px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow-y: auto;
+}
+
+.rw-places legend {
+  padding: 0 0 3px;
+  color: var(--rw-dim);
+}
+
+.rw-place {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.rw-place input {
+  margin: 0;
+  accent-color: var(--rw-accent);
+}
+
+/* ------------------------------ on the page ------------------------------ */
+
+::highlight(reword-hover) {
+  background-color: rgba(255, 84, 51, 0.3);
+}
+
+html[data-reword-hover],
+html[data-reword-hover] * {
+  cursor: text !important;
+}
+
+[data-reword-hidden] {
+  display: none !important;
+}
+
+/* The open text: a tint on the words, a frame on the block they sit in. */
+[data-reword="surface"] {
+  white-space: pre-wrap;
+  cursor: text;
+  background: rgba(255, 84, 51, 0.16);
+}
+
+/* The frame is on the block: the site's own focus ring would draw a second one. */
+[data-reword="surface"],
+[data-reword="surface"]:focus-visible {
+  outline: none !important;
+}
+
+[data-reword-editing] {
+  outline: 2px dashed currentColor;
+  outline-offset: 6px;
+}
+
+[data-reword-editing]:has([data-invalid]) {
+  outline: 2px solid #ff5433;
+}
+
+/* --------------------------- the review sheet ---------------------------- */
+
+.rw-sheet {
+  width: min(780px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  background: #fbf9f4;
+  color: var(--rw-ink);
+  border: 1px solid var(--rw-ink);
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  font: 400 12px / 1.5 var(--rw-mono);
+  text-align: left;
+}
+
+.rw-sheet::backdrop {
+  background: rgba(18, 18, 16, 0.55);
+}
+
+.rw-sheet-inner {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 48px);
+}
+
+.rw-sheet-head,
+.rw-sheet-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 22px;
+}
+
+.rw-sheet-head {
+  border-bottom: 1px solid rgba(18, 18, 16, 0.12);
+}
+
+.rw-sheet-foot {
+  border-top: 1px solid var(--rw-ink);
+  background: #f3efe5;
+}
+
+.rw-sheet-title {
+  margin: 0;
+  font: italic 400 26px / 1.1 var(--rw-serif);
+  letter-spacing: -0.01em;
+}
+
+.rw-meta {
+  margin: 0;
+  color: rgba(18, 18, 16, 0.66);
+}
+
+.rw-sheet-title + .rw-meta {
+  margin-top: 4px;
+}
+
+.rw-sheet-body {
+  overflow-y: auto;
+  padding: 0 22px;
+}
+
+.rw-changes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rw-change {
+  padding: 18px 0;
+}
+
+.rw-change + .rw-change {
+  border-top: 1px solid rgba(18, 18, 16, 0.12);
+}
+
+.rw-change-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rw-chip {
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--rw-ink);
+  color: var(--rw-paper);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rw-change-where {
+  flex: 1;
+  color: rgba(18, 18, 16, 0.66);
+  overflow-wrap: anywhere;
+}
+
+.rw-small {
+  flex: none;
+  padding: 5px 10px;
+  border: 1px solid rgba(18, 18, 16, 0.3);
+  border-radius: 7px;
+  background: none;
+  color: var(--rw-ink);
+  white-space: nowrap;
+}
+
+.rw-small:hover:not(:disabled) {
+  border-color: var(--rw-ink);
+}
+
+.rw-small:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The proof itself is set in serif: this is the part you read. */
+.rw-diff {
+  margin: 12px 0 0;
+  font: 400 17px / 1.6 var(--rw-serif);
+  white-space: pre-wrap;
+}
+
+.rw-diff del {
+  color: rgba(18, 18, 16, 0.5);
+  text-decoration: line-through;
+  text-decoration-color: var(--rw-accent-ink);
+}
+
+.rw-diff ins {
+  background: rgba(255, 84, 51, 0.2);
+  text-decoration: none;
+}
+
+.rw-diff ins[data-tight] {
+  margin-left: 0.3em;
+}
+
+.rw-change-next {
+  margin: 10px 0 0;
+  color: rgba(18, 18, 16, 0.6);
+}
+
+.rw-other {
+  padding: 14px 0;
+  border-top: 1px solid rgba(18, 18, 16, 0.12);
+}
+
+.rw-sheet-foot .rw-send {
+  flex: none;
+}
+
+.rw-sheet-foot .rw-send:disabled {
+  background: rgba(18, 18, 16, 0.08);
+  color: rgba(18, 18, 16, 0.5);
+}
+
+.rw-manual {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  width: 100%;
+}
+
+.rw-prompt {
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--rw-ink);
+  color: var(--rw-paper);
+  font: 400 12px / 1.5 var(--rw-mono);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+  .rw-controls {
+    flex-wrap: wrap;
+  }
+
+  .rw-status {
+    display: none;
+  }
+}
