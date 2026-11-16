@@ -25,6 +25,15 @@ export const site = {
   /** The sentence to give a coding agent that should add reword to another site. */
   installPrompt:
     "Add reword to this site. Follow https://github.com/yempik-ai/reword/blob/main/SPEC.md from start to finish.",
+  /**
+   * The issue a playground visitor can open with their edits. In English: the
+   * maintainers and their agent read it. The brief goes between the two lines.
+   */
+  issue: {
+    title: "Copy edit from the playground",
+    intro: "Written on the live site, in playground mode. reword's brief of the edits:",
+    outro: "To publish: set each After at its address, then run `npm run draft` and follow the procedure it prints.",
+  },
 } as const;
 
 /** `/en/writing` for a locale and a path. Next.js adds the base path to links itself. */

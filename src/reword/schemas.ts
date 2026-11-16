@@ -31,5 +31,12 @@ export function editSchema(forbid: readonly ForbiddenPattern[]) {
 
 export type Edit = z.infer<ReturnType<typeof editSchema>>;
 
-/** What a send did: an agent was started, or here is the prompt to paste. */
-export type SendResult = { sent: true; via: string } | { sent: false; prompt: string };
+/**
+ * What a send did: an agent was started, or here is the prompt to paste. In
+ * the playground nothing can be sent from a browser: the result carries the
+ * brief the agent would read instead.
+ */
+export type SendResult =
+  | { sent: true; via: string }
+  | { sent: false; prompt: string }
+  | { sent: false; prompt: string; brief: string };

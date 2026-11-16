@@ -24,7 +24,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run build
+      # Playground mode: visitors use reword on this site, in their browser.
+      - run: npm run build:playground
         env:
           NEXT_OUTPUT: export
           NEXT_PUBLIC_BASE_PATH: /reword

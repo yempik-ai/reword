@@ -9,3 +9,5 @@ next-env.d.ts
 .vercel
 # reword: the log of an agent started with a custom command
 /.reword/
+# reword: the playground index, written by `npm run playground`
+/public/reword-copy.json

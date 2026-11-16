@@ -127,6 +127,8 @@ Each of these was a real bug while reword was built. The code handles them; keep
 6. **Copy belongs to a locale.** Loaded copy is tagged with its locale and used only while the page is in that locale.
 7. **One request at a time in the review sheet.** Revert and Send are disabled while either is in flight.
 8. **A portal needs the attribute.** If you swap the native `<dialog>` for a component that renders in a portal, put `data-reword` on its overlay and content, or reword will block its own dialog.
+9. **A static page never re-renders (playground).** The dev server re-renders the page after a save; a playground build cannot. The saved copy is written into the page by `showCopy` and given back by `restoreCopy` (`client/surface.ts`), under the rule of item 3. Every place changed is recorded, so a revert restores exactly what React rendered.
+10. **The flag must be a constant.** Next.js inlines an unset `NEXT_PUBLIC_` variable as a run-time lookup, and a dynamic import behind it stays in the bundle. `withReword` defines `NEXT_PUBLIC_REWORD_PLAYGROUND` in every build for that reason: keep `withReword` in the config.
 
 ## 7. Verify
 
@@ -168,7 +170,16 @@ Report the actual output of each check. Do not report a check you did not run.
 
 Then do one real send on a one-word edit, with the author's agent, and confirm the pull request.
 
-## 8. Tell the author
+## 8. Playground mode (only if the author asks for it)
+
+A public demo where visitors edit the site in their own browser. Skip this step unless the author wants it.
+
+1. Copy `scripts/playground.ts`, add `"playground": "node scripts/playground.ts"`, and add `/public/reword-copy.json` to `.gitignore`.
+2. Build with `npm run playground && NEXT_PUBLIC_REWORD_PLAYGROUND=1 next build`.
+3. Tell the author that the index holds every string literal of the content folders, including any that no page shows.
+4. Verify, after that build: the route table has no `/api/reword`; `grep -rl "createSourceFile"` finds nothing in the client output; `grep -rl "api/reword"` finds nothing in it either; the index file is served at `<basePath>/reword-copy.json`. Then, in a browser: a click on copy opens it in Browse mode, a link still navigates, a save survives a reload, Revert restores the page, and Send shows the brief.
+
+## 9. Tell the author
 
 Finish with a short report: the commands (`npm run edit`, `npm run draft`), how many strings are editable per language, what is not editable and why, and which agent the handoff is set to.
 
@@ -176,7 +187,7 @@ Finish with a short report: the commands (`npm run edit`, `npm run draft`), how 
 
 The folder has two halves.
 
-- **Framework-free:** `literals.ts`, `draft.ts`, `workspace.ts`, `agents.ts`, `guard.ts`, `schemas.ts`, `words.ts`, `client/targets.ts`, `client/surface.ts`. They need Node.js on the server and a DOM in the browser.
+- **Framework-free:** `address.ts`, `literals.ts`, `draft.ts`, `edit.ts`, `playground.ts`, `workspace.ts`, `agents.ts`, `guard.ts`, `schemas.ts`, `words.ts`, `client/targets.ts`, `client/surface.ts`, `client/events.ts`, `client/playground.ts`. They need Node.js on the server and a DOM in the browser. `address.ts`, `draft.ts`, `edit.ts` and `playground.ts` need neither the TypeScript compiler nor Node.js: the playground runs them in the browser.
 - **Next.js:** `next.ts` (the route gate), `routes.ts` (two `Request` to `Response` handlers), `Mount.tsx` (the build-time mount), and one import of `usePathname` in `client/Reword.tsx`.
 
 To port: expose the two handlers in the dev server only, keep the request guard in front of them, load the client only in development, and keep the safety contract in the [README](README.md#safety) true. If you cannot prove that the write route is absent from production, do not ship the port.

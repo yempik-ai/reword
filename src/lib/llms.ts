@@ -2,6 +2,7 @@ import { commands } from "@/content/commands";
 import { essays, type Block } from "@/content/essays";
 import { home } from "@/content/home";
 import { absolute, site } from "@/content/site";
+import { PUBLISH_PROMPT } from "@/reword/draft";
 
 // The site as plain text for language models (/llms.txt and /llms-full.txt),
 // generated from the same content as the pages. English: the default locale.
@@ -56,8 +57,8 @@ export function llmsFull(): string {
     `# ${site.name}`,
     `> ${en.meta.description}`,
     `Source: ${site.repo} · License: ${site.license} · Made at ${site.maker.name} (${site.maker.url})`,
-    `## ${en.steps.title}`,
-    en.steps.items.map((step) => `${step.n}. **${step.title}.** ${step.text}`).join("\n"),
+    `## ${en.loop.title}`,
+    en.loop.items.map((step, index) => `${index + 1}. **${step.title}.** ${step.text}`).join("\n"),
     `## ${en.how.title}`,
     en.how.lede,
     en.how.facts.map((fact) => `- **${fact.title}.** ${fact.text}`).join("\n"),
@@ -70,6 +71,7 @@ export function llmsFull(): string {
     `${en.start.agentText}\n\n\`\`\`\n${site.installPrompt}\n\`\`\``,
     `## ${en.agents.title}`,
     en.agents.lede,
+    `${en.agents.prompt}\n\n\`\`\`\n${PUBLISH_PROMPT}\n\`\`\``,
     en.agents.items.map((agent) => `- **${agent.name}.** ${agent.text}`).join("\n"),
     "## Questions and answers",
     en.faq.items.map((item) => `### ${item.q}\n\n${item.a}`).join("\n\n"),

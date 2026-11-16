@@ -24,8 +24,23 @@ jobs:
       - run: npm run build
       # The safety contract, checked on every change: a production build
       # contains neither the route that writes files nor the editor.
+      # (`test`, not `! grep`: bash -e ignores a failing `!` command.)
       - name: reword is absent from the production build
         run: |
-          ! grep -rl "data-reword" .next/static
-          ! grep -rl "createSourceFile" .next/server
-          ! ls .next/server/app/api 2>/dev/null | grep -q reword
+          test -z "$(grep -rl data-reword .next/static)"
+          test -z "$(grep -rl createSourceFile .next/server)"
+          test ! -e .next/server/app/api/reword
+      # Playground mode, as the site deploys it: the editor's browser half
+      # with a backend in the visitor's browser, and nothing that writes.
+      - run: npm run build:playground
+        env:
+          NEXT_OUTPUT: export
+          NEXT_PUBLIC_BASE_PATH: /reword
+      - name: a playground build ships the browser half only
+        run: |
+          test -n "$(grep -rl data-reword out/_next/static)"
+          test -f out/reword-copy.json
+          test ! -e out/api
+          test ! -e .next/server/app/api/reword
+          test -z "$(grep -rl api/reword out)"
+          test -z "$(grep -rl createSourceFile out .next/static)"

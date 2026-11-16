@@ -30,10 +30,16 @@ export type Targets = {
 /** Marks the tool's own elements: never scanned, and always clickable. */
 export const CHROME = "data-reword";
 
+/** React's elements that reword has put out of sight for a moment (see surface.ts). */
+export const HIDDEN = "data-reword-hidden";
+
 const SKIPPED = new Set(["script", "style", "noscript", "template", "textarea", "svg", "canvas"]);
 
-/** Notes for screen readers inside a link ("opens in a new tab") are not part of the copy. */
-const UNSEEN = ".sr-only, .visually-hidden, [hidden]";
+/**
+ * Not part of the copy: notes for screen readers inside a link ("opens in a
+ * new tab"), and React's elements that reword keeps hidden.
+ */
+const UNSEEN = `.sr-only, .visually-hidden, [hidden], [${HIDDEN}]`;
 
 /** How many neighbours on each side may settle which literal a repeated text is. */
 const NEIGHBOURS = 12;

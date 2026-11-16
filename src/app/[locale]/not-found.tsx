@@ -8,7 +8,7 @@ export default function NotFound() {
   return (
     <section className="page">
       <h1 className="page-title">{t.title}</h1>
-      <p className="section-lede">{t.text}</p>
+      <p className="sheet-lede">{t.text}</p>
       <Link className="button" href={href(defaultLocale)}>
         {t.home}
       </Link>

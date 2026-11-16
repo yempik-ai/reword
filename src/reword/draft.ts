@@ -1,11 +1,12 @@
 import type { RewordConfig } from "./config.ts";
-import { counterpartAddress, type Literal, type SourceLiteral } from "./literals.ts";
+import { counterpartAddress, type Literal, type SourceLiteral } from "./address.ts";
 
 // ---------------------------------------------------------------------------
 // The draft, derived. A draft is the set of copy values that differ between
 // the last commit (head) and the working tree (work). Nothing is stored: git
 // is the ledger, and this module only reads two snapshots of the content.
-// Pure: no IO.
+// Pure: no IO, and no TypeScript compiler, so the playground runs it in the
+// browser exactly as the dev server does.
 // ---------------------------------------------------------------------------
 
 /** Parsed content files: file path, then literal path, in source order. */
@@ -217,11 +218,19 @@ function procedure(config: Pick<RewordConfig, "locales" | "check">): string {
   ].join("\n");
 }
 
-/** The draft as a brief for the agent that translates and publishes it. */
-export function renderBrief(draft: Draft, config: Pick<RewordConfig, "locales" | "check">): string {
-  const { changes, other } = draft;
-  if (changes.length === 0 && other.length === 0) return "# reword draft\n\nNo content edits in the working tree.\n";
+/**
+ * What every agent is asked to do. A constant: nothing typed in the browser
+ * reaches a command line. `npm run draft` prints the edits and the procedure.
+ */
+export const PUBLISH_PROMPT =
+  "Publish the reword draft: the uncommitted copy edits in this repository. Run `npm run draft` and follow the procedure it prints, from start to finish.";
 
+/**
+ * The edits of a draft, as Markdown sections: where each one is, before and
+ * after, and the same copy in the other locales. The body of the brief.
+ */
+export function renderEdits(draft: Draft): string {
+  const { changes, other } = draft;
   const sections = changes.map((change, index) => {
     const translations = change.counterparts.map((c) =>
       [
@@ -246,13 +255,17 @@ export function renderBrief(draft: Draft, config: Pick<RewordConfig, "locales" |
         ].join("\n\n")
       : null;
 
-  return (
-    [
-      "# reword draft",
-      `${changes.length} copy ${changes.length === 1 ? "edit" : "edits"} in the working tree, each written by the author in the locale shown.`,
-      ...sections,
-      ...(rest ? [rest] : []),
-      procedure(config),
-    ].join("\n\n") + "\n"
-  );
+  return [
+    `${changes.length} copy ${changes.length === 1 ? "edit" : "edits"} in the working tree, each written by the author in the locale shown.`,
+    ...sections,
+    ...(rest ? [rest] : []),
+  ].join("\n\n");
+}
+
+/** The draft as a brief for the agent that translates and publishes it. */
+export function renderBrief(draft: Draft, config: Pick<RewordConfig, "locales" | "check">): string {
+  if (draft.changes.length === 0 && draft.other.length === 0) {
+    return "# reword draft\n\nNo content edits in the working tree.\n";
+  }
+  return ["# reword draft", renderEdits(draft), procedure(config)].join("\n\n") + "\n";
 }

@@ -9,6 +9,7 @@ the [README](README.md) for what it does.
 ```bash
 npm run edit      # the site with reword, on 127.0.0.1
 npm run dev       # the site without it
+npm run play      # the site in playground mode, as GitHub Pages serves it
 npm run draft     # the pending copy draft, with the procedure to publish it
 npm run check     # lint, types, tests, build: the definition of done
 ```
@@ -30,6 +31,14 @@ procedure it prints. Do not improvise another one.
   `agents.ts`. Never weaken it: the write route must not exist in production,
   must answer loopback and same-origin requests only, and must change only the
   value of one existing string. The prompt sent to an agent is a constant.
+- **Playground mode** (`NEXT_PUBLIC_REWORD_PLAYGROUND=1`, the deployed site)
+  ships the editor's browser half and a static index of the copy, never the
+  write route, git or the TypeScript compiler. Anything the browser runs
+  (`address.ts`, `draft.ts`, `edit.ts`, `playground.ts`, `client/*`) must not
+  import `literals.ts`, `workspace.ts` or `agents.ts`. CI checks the export.
+- **The site builds around reword through its events** (`client/events.ts`),
+  never by reaching into it. The guided tour and the playground's ending are
+  in `src/components/play`, loaded only where reword is on the page.
 - **Copy lives in `src/content`,** keyed by locale (`en`, `it`). A copy change
   touches every locale in the same commit. Components render content strings
   untouched: no trimming, joining or case changes in code, or the string stops
@@ -39,6 +48,8 @@ procedure it prints. Do not improvise another one.
 - **Tests sit next to the module.** A behaviour change comes with a test.
 - **The site is static.** No middleware, no server state. `NEXT_OUTPUT=export`
   must keep building (GitHub Pages).
+- **The planted typo is on purpose.** `home.*.hero.note` holds a typo that the
+  playground dares visitors to fix (`play.*.typo` names it). Do not correct it.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
