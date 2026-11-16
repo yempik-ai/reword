@@ -1,11 +1,14 @@
 import type { Locale } from "./site";
 
 // ---------------------------------------------------------------------------
-// The home page, in every language. This file is the demo: run `npm run edit`,
-// click a sentence on the page, and the string below changes.
+// The home page, in every language. This file is the demo: run `npm run edit`
+// (or open the live site), click a sentence on the page, and the string
+// below changes.
 // ---------------------------------------------------------------------------
 
-type Step = { n: string; title: string; text: string };
+type Step = { title: string; text: string };
+/** One way to install. `id` is structure: it picks the command (content/commands.ts). */
+type Way = { id: "agent" | "terminal" | "starter"; label: string; hint: string };
 type Fact = { label: string; title: string; text: string };
 type Row = { aspect: string; cms: string; chat: string; reword: string };
 type Agent = { name: string; text: string };
@@ -14,20 +17,23 @@ type Question = { q: string; a: string };
 export type Home = {
   meta: { title: string; description: string };
   hero: {
+    /** Above the headline on a build without reword. */
     kicker: string;
+    /** Above the headline when reword is on the page: the playground, or `npm run edit`. */
+    invite: string;
     /** The headline is a proof correction: before, a struck word, the word put in, after. */
     before: string;
     struck: string;
     inserted: string;
     after: string;
     lede: string;
-    primary: string;
-    secondary: string;
+    /** Holds a planted typo (content/play.ts names it): the playground dares the visitor to fix it. */
     note: string;
+    source: string;
   };
-  demo: { caption: string; alt: string };
-  steps: { label: string; title: string; items: Step[] };
-  how: { label: string; title: string; lede: string; facts: Fact[] };
+  install: { label: string; ways: Way[] };
+  loop: { label: string; title: string; items: Step[] };
+  how: { label: string; title: string; lede: string; facts: Fact[]; rule: string };
   between: {
     label: string;
     title: string;
@@ -45,9 +51,9 @@ export type Home = {
     agentTitle: string;
     agentText: string;
   };
-  agents: { label: string; title: string; lede: string; items: Agent[] };
+  agents: { label: string; title: string; lede: string; prompt: string; items: Agent[] };
   faq: { label: string; title: string; items: Question[] };
-  closing: { title: string; text: string; cta: string };
+  closing: { title: string; text: string };
 };
 
 export const home: Record<Locale, Home> = {
@@ -58,36 +64,41 @@ export const home: Record<Locale, Home> = {
         "reword is an open-source in-place editor for websites whose copy lives in code. Click a sentence, rewrite it, and the edit lands in your source file. Git is the draft. Your coding agent translates it and opens the pull request.",
     },
     hero: {
-      kicker: "Open source. Between a devtool and an editorial tool.",
+      kicker: "Open source. For websites whose copy lives in code.",
+      invite: "This page runs reword. Click the headline and rewrite it.",
       before: "Edit your site by",
       struck: "prompting",
       inserted: "clicking",
       after: "on it.",
       lede: "reword is an in-place editor for websites whose copy lives in code. Click a sentence and rewrite it where it stands. The edit lands in your source file, git is the draft, and your coding agent translates it and opens the pull request.",
-      primary: "Get it on GitHub",
-      secondary: "See how it works",
-      note: "No CMS. No database. No prompt for a typo.",
+      note: "No CMS. No database. No prompt for a tpyo.",
+      source: "MIT, one folder. Read it on GitHub",
     },
-    demo: {
-      caption: "A real session on this page: click, rewrite, review, send. Nothing here is a mockup.",
-      alt: "Screen recording of reword. A paragraph is clicked and rewritten in place, the review sheet shows the word diff, and the draft is sent to a coding agent.",
+    install: {
+      label: "Put it on your site",
+      ways: [
+        {
+          id: "agent",
+          label: "Ask your agent",
+          hint: "Paste it into Claude Code, Codex, T3 Code or Cursor, in your site's repo. The agent follows the porting guide.",
+        },
+        { id: "terminal", label: "Copy the folder", hint: "Then follow the five steps in the README." },
+        { id: "starter", label: "Start a new site", hint: "This site is the starter. Clone it and replace our words with yours." },
+      ],
     },
-    steps: {
+    loop: {
       label: "The loop",
-      title: "Three moves, no chat window.",
+      title: "Click, review, send.",
       items: [
         {
-          n: "01",
           title: "Click",
           text: "Run the edit server and switch to Edit. Click a sentence and it becomes a text field, with the typography it already has. Enter saves, Esc cancels.",
         },
         {
-          n: "02",
           title: "Review",
           text: "Each edit is a word diff: what you took out, what you put in. One press takes an edit back. The draft is your uncommitted git diff and nothing more.",
         },
         {
-          n: "03",
           title: "Send",
           text: "One press hands the draft to your coding agent. It translates each edit into your other languages, runs your checks and opens a pull request. You merge.",
         },
@@ -95,7 +106,7 @@ export const home: Record<Locale, Home> = {
     },
     how: {
       label: "Under the hood",
-      title: "Boring on purpose.",
+      title: "What happens when you press Enter.",
       lede: "reword adds no layer between you and your site. It reads the files you already have and changes one string at a time.",
       facts: [
         {
@@ -120,7 +131,7 @@ export const home: Record<Locale, Home> = {
         },
         {
           label: "Local only",
-          title: "It cannot exist in production",
+          title: "The write route cannot exist in production",
           text: "The route that writes files is a route only in the editing dev server. A production build does not contain it. It answers loopback and same-origin requests, nothing else.",
         },
         {
@@ -129,6 +140,7 @@ export const home: Record<Locale, Home> = {
           text: "Declare what your copy never contains. reword refuses it while you type and says why. This site writes without em dashes: try to type one.",
         },
       ],
+      rule: "The rule, as this site's reword.config.ts declares it:",
     },
     between: {
       label: "Where it sits",
@@ -188,6 +200,7 @@ export const home: Record<Locale, Home> = {
       label: "The handoff",
       title: "Any agent. One sentence.",
       lede: "The agent needs a single instruction, because one command prints both your edits and the procedure to publish them. That is why the handoff works with every coding agent.",
+      prompt: "What every agent receives, word for word:",
       items: [
         {
           name: "T3 Code",
@@ -209,7 +222,7 @@ export const home: Record<Locale, Home> = {
     },
     faq: {
       label: "Questions",
-      title: "Asked before you ask.",
+      title: "Before you install it.",
       items: [
         {
           q: "What is reword?",
@@ -229,7 +242,11 @@ export const home: Record<Locale, Home> = {
         },
         {
           q: "Is it safe to run?",
-          a: "reword exists only in a development server on your own machine. The route that writes files is not part of a production build, it answers only loopback and same-origin requests, and it can change only the value of a string that already exists.",
+          a: "The part of reword that writes files exists only in a development server on your own machine. It is not part of a production build, it answers only loopback and same-origin requests, and it can change only the value of a string that already exists.",
+        },
+        {
+          q: "How can this page be editable, then?",
+          a: "This site is built in playground mode, an opt-in for demos. The build ships the editor's browser half with a backend that lives in your browser: your edits stay in local storage and never leave it. There is no route that writes files and no server. Without the flag, a production build contains nothing of reword.",
         },
         {
           q: "Can reword edit a site that has one language?",
@@ -247,8 +264,7 @@ export const home: Record<Locale, Home> = {
     },
     closing: {
       title: "Your website has a text cursor now.",
-      text: "Clone the starter, switch to Edit, and write.",
-      cta: "Get it on GitHub",
+      text: "Paste one sentence into your coding agent and make it true.",
     },
   },
 
@@ -259,36 +275,41 @@ export const home: Record<Locale, Home> = {
         "reword è un editor in-place open source per i siti che tengono i testi nel codice. Clicchi una frase, la riscrivi, e la modifica finisce nel file sorgente. La bozza è git. Il tuo coding agent la traduce e apre la pull request.",
     },
     hero: {
-      kicker: "Open source. A metà tra un devtool e uno strumento editoriale.",
+      kicker: "Open source. Per i siti che tengono i testi nel codice.",
+      invite: "Su questa pagina gira reword. Clicca il titolo e riscrivilo.",
       before: "Riscrivi il tuo sito",
       struck: "con un prompt",
       inserted: "con un click",
       after: "e basta.",
       lede: "reword è un editor in-place per i siti che tengono i testi nel codice. Clicchi una frase e la riscrivi lì dov'è. La modifica finisce nel file sorgente, la bozza è git, e il tuo coding agent la traduce e apre la pull request.",
-      primary: "Prendilo su GitHub",
-      secondary: "Guarda come funziona",
-      note: "Niente CMS. Niente database. Niente prompt per un refuso.",
+      note: "Niente CMS. Niente database. Niente prompt per un rfeuso.",
+      source: "MIT, una cartella. Leggila su GitHub",
     },
-    demo: {
-      caption: "Una sessione vera su questa pagina: click, riscrittura, revisione, invio. Qui non c'è nessun mockup.",
-      alt: "Registrazione dello schermo di reword. Un paragrafo viene cliccato e riscritto sul posto, il foglio di revisione mostra il diff parola per parola, e la bozza viene mandata a un coding agent.",
+    install: {
+      label: "Mettilo sul tuo sito",
+      ways: [
+        {
+          id: "agent",
+          label: "Chiedilo al tuo agente",
+          hint: "Incollala in Claude Code, Codex, T3 Code o Cursor, nella repo del tuo sito. L'agente segue la guida al porting.",
+        },
+        { id: "terminal", label: "Copia la cartella", hint: "Poi segui i cinque passi del README." },
+        { id: "starter", label: "Parti da zero", hint: "Questo sito è lo starter. Clonalo e sostituisci le nostre parole con le tue." },
+      ],
     },
-    steps: {
+    loop: {
       label: "Il giro",
-      title: "Tre mosse, zero finestre di chat.",
+      title: "Clicca, rivedi, manda.",
       items: [
         {
-          n: "01",
           title: "Clicca",
           text: "Avvia il server di editing e passa a Edit. Clicchi una frase e diventa un campo di testo, con la tipografia che ha già. Invio salva, Esc annulla.",
         },
         {
-          n: "02",
           title: "Rivedi",
           text: "Ogni modifica è un diff parola per parola: cosa hai tolto, cosa hai messo. Con un click ne annulli una. La bozza è il tuo diff di git non committato, e nient'altro.",
         },
         {
-          n: "03",
           title: "Manda",
           text: "Con un click la bozza passa al tuo coding agent. Traduce ogni modifica nelle altre lingue, fa girare i tuoi check e apre una pull request. Il merge lo fai tu.",
         },
@@ -296,7 +317,7 @@ export const home: Record<Locale, Home> = {
     },
     how: {
       label: "Sotto il cofano",
-      title: "Noioso di proposito.",
+      title: "Cosa succede quando premi Invio.",
       lede: "reword non mette nessuno strato tra te e il tuo sito. Legge i file che hai già e cambia una stringa alla volta.",
       facts: [
         {
@@ -321,7 +342,7 @@ export const home: Record<Locale, Home> = {
         },
         {
           label: "Solo in locale",
-          title: "In produzione non può esistere",
+          title: "La route che scrive non può esistere in produzione",
           text: "La route che scrive i file è una route solo nel dev server di editing. Una build di produzione non la contiene. Risponde a loopback e alle richieste same-origin, e a nient'altro.",
         },
         {
@@ -330,6 +351,7 @@ export const home: Record<Locale, Home> = {
           text: "Dichiari cosa i tuoi testi non contengono mai. reword lo rifiuta mentre scrivi e ti dice perché. Questo sito scrive senza lineette lunghe: prova a digitarne una.",
         },
       ],
+      rule: "La regola, come la dichiara il reword.config.ts di questo sito:",
     },
     between: {
       label: "Dove si mette",
@@ -389,6 +411,7 @@ export const home: Record<Locale, Home> = {
       label: "Il passaggio",
       title: "Qualsiasi agente. Una frase.",
       lede: "All'agente basta una sola istruzione, perché un unico comando stampa sia le tue modifiche sia la procedura per pubblicarle. Per questo il passaggio funziona con ogni coding agent.",
+      prompt: "Cosa riceve ogni agente, parola per parola:",
       items: [
         {
           name: "T3 Code",
@@ -410,7 +433,7 @@ export const home: Record<Locale, Home> = {
     },
     faq: {
       label: "Domande",
-      title: "Risposte prima delle domande.",
+      title: "Prima di installarlo.",
       items: [
         {
           q: "Che cos'è reword?",
@@ -430,7 +453,11 @@ export const home: Record<Locale, Home> = {
         },
         {
           q: "È sicuro da usare?",
-          a: "reword esiste solo in un server di sviluppo sulla tua macchina. La route che scrive i file non fa parte della build di produzione, risponde solo a loopback e alle richieste same-origin, e può cambiare solo il valore di una stringa che esiste già.",
+          a: "La parte di reword che scrive i file esiste solo in un server di sviluppo sulla tua macchina. Non fa parte della build di produzione, risponde solo a loopback e alle richieste same-origin, e può cambiare solo il valore di una stringa che esiste già.",
+        },
+        {
+          q: "E allora come fa questa pagina a essere modificabile?",
+          a: "La build di questo sito è in modalità playground, un opt-in pensato per le demo. Contiene la metà dell'editor che gira nel browser, con un backend che vive nel tuo browser: le tue modifiche restano nel local storage e non ne escono. Non c'è nessuna route che scrive file e nessun server. Senza il flag, una build di produzione non contiene niente di reword.",
         },
         {
           q: "reword può modificare un sito in una sola lingua?",
@@ -448,8 +475,7 @@ export const home: Record<Locale, Home> = {
     },
     closing: {
       title: "Adesso il tuo sito ha un cursore di testo.",
-      text: "Clona lo starter, passa a Edit e scrivi.",
-      cta: "Prendilo su GitHub",
+      text: "Incolla una frase nel tuo coding agent e rendilo vero.",
     },
   },
 };

@@ -52,14 +52,15 @@ export default async function EssayPage({ params }: Params) {
   return (
     <article className="page essay">
       <JsonLd data={article} />
-      <Link className="back" href={href(locale, "/writing")}>
-        <span aria-hidden="true">←</span> {t.writing.back}
-      </Link>
-      <time className="kicker" dateTime={essay.date}>
-        {essay.date}
-      </time>
+      <div className="page-margin">
+        <Link className="back" href={href(locale, "/writing")}>
+          <span aria-hidden="true">← </span>
+          {t.writing.back}
+        </Link>
+        <time dateTime={essay.date}>{essay.date}</time>
+      </div>
       <h1 className="page-title">{essay.title}</h1>
-      <p className="section-lede">{essay.summary}</p>
+      <p className="sheet-lede">{essay.summary}</p>
       <Prose body={essay.body} newTab={t.newTab} />
     </article>
   );

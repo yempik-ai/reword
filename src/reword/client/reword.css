@@ -185,6 +185,13 @@
   background-color: rgba(255, 84, 51, 0.3);
 }
 
+/* The playground's Browse mode: a quieter mark, the page stays a page. */
+::highlight(reword-hint) {
+  text-decoration: underline dotted rgba(255, 84, 51, 0.9);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
 html[data-reword-hover],
 html[data-reword-hover] * {
   cursor: text !important;
@@ -381,6 +388,16 @@ html[data-reword-hover] * {
   gap: 8px;
   justify-items: start;
   width: 100%;
+}
+
+.rw-brief {
+  max-height: 40dvh;
+  overflow-y: auto;
+}
+
+.rw-manual code {
+  font: inherit;
+  color: var(--rw-ink);
 }
 
 .rw-prompt {

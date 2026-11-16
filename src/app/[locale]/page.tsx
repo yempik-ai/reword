@@ -25,7 +25,7 @@ export default async function HomePage({ params }: Params) {
   return (
     <>
       <JsonLd data={faq} />
-      <Home c={content} />
+      <Home c={content} locale={locale} />
     </>
   );
 }

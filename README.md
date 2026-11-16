@@ -33,6 +33,8 @@
 
 It sits between a devtool and an editorial tool. There is no CMS, no database and no hosted service: the tool is one folder in your repository and it exists only in your dev server.
 
+**Try it before you install it.** [The website](https://yempik-ai.github.io/reword/) runs reword in [playground mode](#playground-mode): click the headline and rewrite it. Your edits stay in your browser.
+
 ## Why
 
 A personal site has one writer and its copy in the repo. That is the right architecture and a bad writing experience: to fix a sentence you find a string in a file, or you describe the sentence to an agent, wait, pay tokens and get words you did not write.
@@ -121,10 +123,12 @@ reword is one folder, one route file and a few lines of config. No package to in
 
    ```json
    {
-     "edit": "REWORD=1 next dev --hostname 127.0.0.1",
+     "edit": "REWORD=1 next dev --webpack --hostname 127.0.0.1",
      "draft": "node scripts/draft.ts"
    }
    ```
+
+   `--webpack`: on Next.js 16.4, Turbopack fails to resolve `next/font/google` once a page extension is added. Without `next/font`, Turbopack works too.
 
    Copy [`scripts/draft.ts`](scripts/draft.ts) too. It is six lines. Add `/.reword/` to your `.gitignore`: a custom agent command writes its log there.
 
@@ -225,6 +229,35 @@ Two attributes for your markup:
 
 - Links that carry `hreflang` keep working in Edit mode, so your language switcher switches the language you edit.
 - `data-reword-pass` on any element keeps it working in Edit mode.
+- `data-reword` on any element makes it reword's own: never read as copy, never stopped. Put it on parts of your page that repeat copy, such as a live preview.
+
+## Playground mode
+
+A public demo of reword on your own site, off by default. Visitors click your copy and rewrite it where it stands, review their word diff and press Send. Nothing they type leaves their browser.
+
+```bash
+npm run playground                              # parses your content into public/reword-copy.json
+NEXT_PUBLIC_REWORD_PLAYGROUND=1 next build      # with withReword in next.config.ts
+```
+
+Add `/public/reword-copy.json` to your `.gitignore`: it is written on every build. Copy [`scripts/playground.ts`](scripts/playground.ts) with the folder.
+
+**What a playground build ships:** the editor's browser half (the bar, the review sheet, the page matcher) and a backend that lives in the visitor's browser. Your content files are parsed once, at build time, into a static JSON index. In the browser that index is the last commit, the visitor's edits are kept in `localStorage`, and the same functions as on the dev server compute the copy, the draft, the word diff and the brief. An edit is kept only while the text it replaced is still what the build says (compare-and-swap), so a deploy that changes a sentence drops the edits made to its old text.
+
+**What it does not ship:** the route that writes files (there is no `/api/reword`), the TypeScript compiler, git, or any server. Send to agent cannot start an agent from a browser: it shows the brief the agent would read. CI checks all of this on every change.
+
+**How it behaves:** a plain click on copy opens it even in Browse mode, while links, buttons and anything interactive keep working. Edit mode (the bar, or <kbd>Cmd</kbd>+<kbd>E</kbd>) works as on the dev server: link text becomes editable and links rest. A static page never re-renders, so saved copy is written into the page by the same rule as the edit: React's nodes are emptied or hidden, never removed, and copy with `[label](href)` links is shown in one span of reword's own.
+
+**Events for your page.** reword dispatches DOM events on `window`, typed through `WindowEventMap`, so a site can build around the editor without reaching into it. This website uses them for its guided tour and its ending.
+
+| Event | When |
+|---|---|
+| `reword:session` | A text opens, changes or closes. `detail`: the literal, the text as typed, the refusal if any, or `null` |
+| `reword:draft` | The draft was read. `detail`: the draft |
+| `reword:review` | The review sheet opened |
+| `reword:send` | Playground only, cancelable. `detail`: the draft, the brief and the prompt. Call `preventDefault()` to show your own ending; otherwise the sheet shows the brief |
+| `reword:open-text` | Dispatch it to open the first text inside `detail.element`: a keyboard path to editing |
+| `reword:open-review` | Dispatch it to open the review sheet |
 
 ## What is editable
 
@@ -250,6 +283,7 @@ A click on text that is not editable says so in the bar. Nothing fails silently.
 reword writes files and can start an agent, so it is built to exist in one place only: a dev server on your machine.
 
 - **Not in production.** The API route is a file named `route.reword.ts`. That extension is a page extension only in the dev server started with `REWORD=1`. A production build and a plain `npm run dev` do not contain the route. The interface is loaded with a condition resolved at build time, so production has neither the import nor the code.
+- **Playground builds are opt-in.** With `NEXT_PUBLIC_REWORD_PLAYGROUND=1` a build ships the editor's browser half and a static index of your copy, and still no route, no compiler and no server. That index holds every string literal of your content folders, including any that no page shows: keep nothing private there.
 - **Loopback only.** `npm run edit` binds to `127.0.0.1`. Every request must carry a loopback `Host` (this stops DNS rebinding).
 - **Same origin only.** `Sec-Fetch-Site` must be `same-origin`. Writes need a matching `Origin` and a JSON body, so another site open in your browser cannot read your draft or write through a form.
 - **One string at a time.** A save can name only a literal that the server's own index lists, and can change only its value. Your text is serialized as a string literal, so it cannot become code.
@@ -278,7 +312,11 @@ Today reword runs in Next.js App Router sites whose content is in TypeScript or 
 
 ### Is it safe to run?
 
-reword exists only in a development server on your own machine. The route that writes files is not part of a production build, it answers only loopback and same-origin requests, and it can change only the value of a string that already exists.
+The part of reword that writes files exists only in a development server on your own machine. It is not part of a production build, it answers only loopback and same-origin requests, and it can change only the value of a string that already exists.
+
+### How can the website be editable, then?
+
+It is built in [playground mode](#playground-mode), an opt-in for demos. The build ships the editor's browser half with a backend that lives in your browser. Your edits stay in local storage and never leave it. There is no route that writes files and no server.
 
 ### Can reword edit a site that has one language?
 
@@ -315,11 +353,12 @@ Issues and pull requests are welcome: [CONTRIBUTING.md](CONTRIBUTING.md).
 npm install
 npm run edit      # the site with reword, on 127.0.0.1
 npm run dev       # the site without it
+npm run play      # the site in playground mode, as it is deployed
 npm run draft     # the pending draft, as the agent reads it
 npm run check     # lint, types, tests, build
 ```
 
-The tool is in [`src/reword`](src/reword): the server half at the top level, the browser half in `client`. Everything else is the starter site.
+The tool is in [`src/reword`](src/reword): the server half at the top level, the browser half in `client`. Everything else is the starter site. Its guided tour and the playground's ending are in `src/components/play`, built on the events above.
 
 ## Credits
 

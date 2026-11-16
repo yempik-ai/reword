@@ -1,4 +1,5 @@
-import { CHROME, type Target } from "./targets";
+import { INLINE_LINK } from "../inline-links";
+import { CHROME, HIDDEN, type Target } from "./targets";
 
 // ---------------------------------------------------------------------------
 // The in-place edit. React owns every node of the page, so nothing of React's
@@ -11,7 +12,6 @@ import { CHROME, type Target } from "./targets";
 /** How long a saved paragraph waits for the dev server to re-render it. */
 const REFRESH_TIMEOUT_MS = 4000;
 
-const HIDDEN = "data-reword-hidden";
 /** On the element that holds the open text: draws the frame around it. */
 const EDITING = "data-reword-editing";
 
@@ -67,7 +67,8 @@ export function openSurface(target: Target, value: string, point: { x: number; y
   } else {
     for (const child of target.element.childNodes) {
       if (child.nodeType === Node.TEXT_NODE) empty(child as Text);
-      else if (child instanceof Element) {
+      // Hidden already: React's links, under copy the playground shows (see showCopy).
+      else if (child instanceof Element && !child.hasAttribute(HIDDEN)) {
         child.setAttribute(HIDDEN, "");
         hidden.push(child);
       }
@@ -120,4 +121,117 @@ export function openSurface(target: Target, value: string, point: { x: number; y
       observer.observe(target.element, { childList: true, characterData: true, subtree: true });
     },
   };
+}
+
+// ---------------------------------------------------------------------------
+// Showing saved copy where React will not (the playground). On the dev
+// server a save re-renders the page. A static build never re-renders, so the
+// saved text is written into the page by the same rule as the edit: React's
+// text nodes are emptied or rewritten, its elements hidden, and one span of
+// ours carries copy that holds links. Every change is recorded, so the page
+// can be given back exactly as React made it.
+// ---------------------------------------------------------------------------
+
+const SHOWN = "data-reword-shown";
+
+type Overlay = { texts: [Text, string][]; hidden: Element[]; span: HTMLElement | null };
+
+/** What was changed at each place, keyed by the place's text node or element. */
+const overlays = new WeakMap<Node, Overlay>();
+
+const placeOf = (target: Target): Node => target.text ?? target.element;
+
+/** `/en/writing/x/` and `/en/writing/x` are one address, with or without the base path. */
+function sameHref(rendered: string | null, written: string, basePath: string): boolean {
+  if (rendered === null) return false;
+  const strip = (href: string) =>
+    (basePath && href.startsWith(`${basePath}/`) ? href.slice(basePath.length) : href).replace(/\/$/, "");
+  return strip(rendered) === strip(written);
+}
+
+/** A link of the saved copy: a copy of the site's own anchor for that address, so it keeps the site's look. */
+function anchor(label: string, href: string, models: HTMLAnchorElement[], basePath: string): HTMLAnchorElement {
+  const index = models.findIndex((model) => sameHref(model.getAttribute("href"), href, basePath));
+  if (index < 0) {
+    const created = document.createElement("a");
+    created.href = href.startsWith("/") ? `${basePath}${href}` : href;
+    created.textContent = label;
+    return created;
+  }
+  const [model] = models.splice(index, 1);
+  const link = model.cloneNode(true) as HTMLAnchorElement;
+  link.removeAttribute(HIDDEN);
+  const text = [...link.childNodes].find((node): node is Text => node.nodeType === Node.TEXT_NODE);
+  if (text) text.data = label;
+  else link.prepend(label);
+  return link;
+}
+
+/** Copy that holds `[label](href)` links, as the nodes a reader sees. */
+function render(span: HTMLElement, value: string, models: HTMLAnchorElement[], basePath: string): void {
+  const pool = [...models];
+  const nodes: (string | Node)[] = [];
+  let last = 0;
+  for (const match of value.matchAll(INLINE_LINK)) {
+    if (match.index > last) nodes.push(value.slice(last, match.index));
+    nodes.push(anchor(match[1], match[2], pool, basePath));
+    last = match.index + match[0].length;
+  }
+  if (last < value.length) nodes.push(value.slice(last));
+  span.replaceChildren(...nodes);
+}
+
+/** Shows `value` at a place on the page, in place of the copy React rendered there. */
+export function showCopy(target: Target, value: string, basePath: string): void {
+  const place = placeOf(target);
+  let overlay = overlays.get(place);
+  if (!overlay) {
+    overlay = { texts: [], hidden: [], span: null };
+    overlays.set(place, overlay);
+  }
+  const record = (text: Text) => {
+    if (!overlay.texts.some(([known]) => known === text)) overlay.texts.push([text, text.data]);
+  };
+
+  // Plain copy in a plain place: the text node simply says something else.
+  if (target.text && !overlay.span && !value.match(INLINE_LINK)) {
+    record(target.text);
+    target.text.data = value;
+    return;
+  }
+
+  if (!overlay.span) {
+    const span = document.createElement("span");
+    span.setAttribute(SHOWN, "");
+    if (target.text) {
+      record(target.text);
+      target.text.data = "";
+      target.text.after(span);
+    } else {
+      for (const child of target.element.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          record(child as Text);
+          (child as Text).data = "";
+        } else if (child instanceof Element && !child.hasAttribute(HIDDEN)) {
+          child.setAttribute(HIDDEN, "");
+          overlay.hidden.push(child);
+        }
+      }
+      target.element.append(span);
+    }
+    overlay.span = span;
+  }
+  const models = [...target.element.querySelectorAll<HTMLAnchorElement>(`a[${HIDDEN}]`)];
+  render(overlay.span, value, models, basePath);
+}
+
+/** Gives a place back to React, exactly as it rendered it. */
+export function restoreCopy(target: Target): void {
+  const place = placeOf(target);
+  const overlay = overlays.get(place);
+  if (!overlay) return;
+  overlays.delete(place);
+  overlay.span?.remove();
+  for (const element of overlay.hidden) element.removeAttribute(HIDDEN);
+  for (const [text, data] of overlay.texts) text.data = data;
 }

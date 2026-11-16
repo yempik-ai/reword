@@ -21,6 +21,9 @@ days.
 - The route gate (`src/reword/next.ts`) and the build-time mount (`src/reword/Mount.tsx`).
 - The save (`src/reword/workspace.ts`, `src/reword/literals.ts`).
 - The handoff (`src/reword/agents.ts`).
+- Playground mode (`src/reword/playground.ts`, `src/reword/client/playground.ts`):
+  a playground build must contain no route that writes files, and nothing a
+  visitor types may leave their browser.
 
 ## What is not
 

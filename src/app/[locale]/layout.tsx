@@ -8,6 +8,7 @@ import { home } from "@/content/home";
 import { basePath, isLocale, locales, site } from "@/content/site";
 import { ui } from "@/content/ui";
 import JsonLd from "@/components/JsonLd";
+import { LivePayoff } from "@/components/Live";
 import { pageMetadata } from "@/lib/seo";
 import RewordMount from "@/reword/Mount";
 import "../globals.css";
@@ -98,6 +99,7 @@ export default async function LocaleLayout({
           {children}
         </main>
         <Footer locale={locale} />
+        <LivePayoff locale={locale} install={home[locale].install} check={config.check} newTab={ui[locale].newTab} />
         <RewordMount config={config} basePath={basePath} />
       </body>
     </html>

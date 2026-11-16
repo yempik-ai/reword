@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { z } from "zod";
 import type { RewordConfig } from "./config.ts";
+import { PUBLISH_PROMPT } from "./draft.ts";
 import type { SendResult } from "./schemas.ts";
 
 // ---------------------------------------------------------------------------
@@ -14,12 +15,7 @@ import type { SendResult } from "./schemas.ts";
 
 const run = promisify(execFile);
 
-/**
- * What every agent is asked to do. A constant: nothing typed in the browser
- * reaches a command line. `npm run draft` prints the edits and the procedure.
- */
-export const PUBLISH_PROMPT =
-  "Publish the reword draft: the uncommitted copy edits in this repository. Run `npm run draft` and follow the procedure it prints, from start to finish.";
+export { PUBLISH_PROMPT } from "./draft.ts";
 
 /** What `t3 thread start --json` prints when the thread exists. */
 const startedThread = z.object({ threadId: z.string().min(1) });

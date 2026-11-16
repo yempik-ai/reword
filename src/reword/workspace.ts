@@ -4,9 +4,12 @@ import { readdir, readFile, realpath, rename, rm, writeFile } from "node:fs/prom
 import path from "node:path";
 import { promisify } from "node:util";
 import type { RewordConfig } from "./config.ts";
-import { diffDraft, indexLiterals, isCopy, type ContentFiles, type CopyLiteral, type Draft } from "./draft.ts";
+import { diffDraft, indexLiterals, type ContentFiles, type CopyLiteral, type Draft } from "./draft.ts";
+import { checkEdit, RewordError } from "./edit.ts";
 import { differsOnlyInLiterals, parseLiterals, replaceLiteral } from "./literals.ts";
 import type { Edit } from "./schemas.ts";
+
+export { RewordError } from "./edit.ts";
 
 // ---------------------------------------------------------------------------
 // reword's IO: content files on disk and the last commit through git. Runs on
@@ -18,18 +21,6 @@ const run = promisify(execFile);
 
 const SOURCE = /\.[cm]?[jt]sx?$/;
 const NOT_CONTENT = /\.(test|spec)\.[cm]?[jt]sx?$|\.d\.[cm]?ts$/;
-
-type ErrorCode = "not_found" | "not_editable" | "conflict" | "invalid" | "empty" | "no_git";
-
-/** A refusal the browser can show as it is. */
-export class RewordError extends Error {
-  readonly code: ErrorCode;
-
-  constructor(code: ErrorCode, message: string) {
-    super(message);
-    this.code = code;
-  }
-}
 
 type Workspace = {
   /** The working tree. */
@@ -92,12 +83,18 @@ async function contentFiles(root: string, folders: readonly string[]): Promise<s
   return files.filter((_, index) => real[index] !== null);
 }
 
-/** Reads the content files as they are on disk and as they were at the last commit. */
-export async function readWorkspace(root: string, config: RewordConfig): Promise<Workspace> {
+/** The text of every content file, as it is on disk. No git: the playground index is built from this. */
+export async function readSources(root: string, config: Pick<RewordConfig, "content">): Promise<Map<string, string>> {
   const files = await contentFiles(root, config.content);
-  const sources = new Map(
+  return new Map(
     await Promise.all(files.map(async (file) => [file, await readFile(path.join(root, file), "utf8")] as const))
   );
+}
+
+/** Reads the content files as they are on disk and as they were at the last commit. */
+export async function readWorkspace(root: string, config: RewordConfig): Promise<Workspace> {
+  const sources = await readSources(root, config);
+  const files = [...sources.keys()];
   const work = new Map(files.map((file) => [file, parse("work", file, sources.get(file) ?? "", config.locales)]));
 
   const status = await git(root, [
@@ -149,22 +146,11 @@ async function write(root: string, config: RewordConfig, edit: Edit): Promise<Co
   const { work, head, sources } = await readWorkspace(root, config);
   const literals = work.get(edit.file);
   const source = sources.get(edit.file);
-  const literal = literals?.get(edit.path);
-  const target = literal ? await physical(root, config.content, edit.file) : null;
-  if (!literals || source === undefined || !literal || target === null) {
+  const target = literals && source !== undefined ? await physical(root, config.content, edit.file) : null;
+  if (!literals || source === undefined || target === null) {
     throw new RewordError("not_found", "This text is no longer in the content files. Reload the page.");
   }
-  if (literal.locale === null || !isCopy(config, work, head, edit.file, literal)) {
-    throw new RewordError("not_editable", "This text is structure, not copy. Change it in the code.");
-  }
-  if (literal.value !== edit.before) {
-    throw new RewordError("conflict", "This text changed on disk since the page loaded. Reload the page.");
-  }
-  // A text is single-line unless it has, or had at the last commit, a line break.
-  const lines = [literal.value, head.get(edit.file)?.get(edit.path)?.value ?? ""].some((text) => text.includes("\n"));
-  if (edit.after.includes("\n") && !lines) {
-    throw new RewordError("invalid", "This text is a single line.");
-  }
+  const literal = checkEdit(config, work, head, edit);
 
   const next = replaceLiteral(edit.file, source, literal, edit.after, config.locales);
 

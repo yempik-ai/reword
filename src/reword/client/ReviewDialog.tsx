@@ -5,11 +5,17 @@ import type { Draft, DraftChange } from "../draft";
 import type { SendResult } from "../schemas";
 import { diffWords } from "../words";
 import type { Result } from "./api";
+import { tell } from "./events";
 import { CHROME } from "./targets";
 
 // The draft before it leaves: every edit as a word diff, one press to take
 // an edit back, one press to hand everything to the agent. A native <dialog>:
 // focus trap, Esc and the top layer come from the browser.
+//
+// In the playground the send cannot reach an agent. It tells the page
+// (`reword:send`, cancelable): a site that shows its own ending cancels it
+// and the sheet closes; otherwise the sheet shows the brief the agent would
+// have read.
 
 const SENT_KEY = "reword:sent";
 
@@ -62,6 +68,7 @@ export default function ReviewDialog({
   isOpen,
   onOpenChange,
   draft,
+  kind,
   translates,
   onRevert,
   onSend,
@@ -69,6 +76,8 @@ export default function ReviewDialog({
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   draft: Draft;
+  /** Where the draft is: the working tree, or the browser (the playground). */
+  kind: "dev" | "playground";
   /** False on a single-language site: the agent then only checks and publishes. */
   translates: boolean;
   onRevert: (change: DraftChange) => Promise<Result<unknown>>;
@@ -101,6 +110,13 @@ export default function ReviewDialog({
     if (!result.ok) {
       setProblem(result.error);
       return;
+    }
+    if ("brief" in result.value) {
+      const shown = !tell("reword:send", { draft, brief: result.value.brief, prompt: result.value.prompt }, true);
+      if (shown) {
+        onOpenChange(false);
+        return;
+      }
     }
     setOutcome(result.value);
     if (result.value.sent) {
@@ -145,7 +161,8 @@ export default function ReviewDialog({
                 Draft
               </h2>
               <p className="rw-meta">
-                {count} {count === 1 ? "edit" : "edits"} in your working tree, not committed.
+                {count} {count === 1 ? "edit" : "edits"}{" "}
+                {kind === "playground" ? "kept in this browser. Nothing leaves it." : "in your working tree, not committed."}
               </p>
             </div>
             <button type="button" className="rw-small" onClick={() => onOpenChange(false)}>
@@ -170,7 +187,19 @@ export default function ReviewDialog({
             )}
           </div>
           <footer className="rw-sheet-foot">
-            {outcome && !outcome.sent ? (
+            {outcome && "brief" in outcome ? (
+              <div className="rw-manual">
+                <p className="rw-meta">
+                  A playground: nothing left this browser. On your site, your agent would get the sentence below, run{" "}
+                  <code>npm run draft</code> and read this brief.
+                </p>
+                <pre className="rw-prompt">{outcome.prompt}</pre>
+                <pre className="rw-prompt rw-brief">{outcome.brief}</pre>
+                <button type="button" className="rw-small" onClick={() => void copyPrompt(outcome.brief)}>
+                  {copied ? "Copied" : "Copy the brief"}
+                </button>
+              </div>
+            ) : outcome && !outcome.sent ? (
               <div className="rw-manual">
                 <p className="rw-meta">Paste this into your coding agent, in this project:</p>
                 <pre className="rw-prompt">{outcome.prompt}</pre>

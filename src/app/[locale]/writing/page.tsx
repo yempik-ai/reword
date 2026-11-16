@@ -22,9 +22,11 @@ export default async function WritingPage({ params }: Params) {
 
   return (
     <section className="page">
-      <p className="kicker">{t.kicker}</p>
+      <div className="page-margin">
+        <p className="kicker">{t.kicker}</p>
+      </div>
       <h1 className="page-title">{t.title}</h1>
-      <p className="section-lede">{t.lede}</p>
+      <p className="sheet-lede">{t.lede}</p>
       <ul className="essay-list">
         {sortedEssays(locale).map((essay) => (
           <li key={essay.slug}>

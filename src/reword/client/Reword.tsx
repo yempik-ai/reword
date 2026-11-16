@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import type { ForbiddenPattern } from "../config";
+import type { RewordConfig } from "../config";
 import type { CopyLiteral, Draft, DraftChange } from "../draft";
 import { copySchema } from "../schemas";
 import { createApi } from "./api";
+import { tell } from "./events";
+import { createPlaygroundApi } from "./playground";
 import ReviewDialog from "./ReviewDialog";
 import { openSurface, type Surface } from "./surface";
 import { CHROME, findTargets, hitTest, type Target, type Targets } from "./targets";
@@ -13,11 +15,16 @@ import "./reword.css";
 
 // ---------------------------------------------------------------------------
 // reword on the page: edit the site's copy where it is, in any locale.
-// Mounted only by `npm run edit` (see Mount.tsx). In Edit mode the page is a
-// document: clicks edit text, links and buttons stand still. A save goes
-// straight into the content files, so the draft is the working tree and git
-// is its ledger. "Send to agent" hands the draft over for translation and
-// publishing.
+// Mounted by `npm run edit`, or by a playground build (see Mount.tsx). In
+// Edit mode the page is a document: clicks edit text, links and buttons stand
+// still. A save goes straight into the content files, so the draft is the
+// working tree and git is its ledger. "Send to agent" hands the draft over
+// for translation and publishing.
+//
+// In the playground the backend is the browser (playground.ts) and a plain
+// click on copy opens it even in Browse mode, while links, buttons and
+// anything else interactive keep working. The flag is resolved at build
+// time, so a playground bundle has no dev API and a dev bundle no playground.
 //
 // The only framework import is `usePathname`: a text left open is dropped
 // when the route changes.
@@ -31,11 +38,15 @@ type Session = {
   error: string | null;
 };
 
-type Props = { locales: readonly string[]; forbid: readonly ForbiddenPattern[]; basePath: string };
+type Props = Pick<RewordConfig, "locales" | "forbid" | "check" | "structuralKeys"> & { basePath: string };
+
+const PLAYGROUND = process.env.NEXT_PUBLIC_REWORD_PLAYGROUND === "1";
 
 const MODE_KEY = "reword:edit";
 const MODE_EVENT = "reword:mode";
 const HOVER = "reword-hover";
+/** The lighter mark of the playground's Browse mode: this text can be rewritten. */
+const HINT = "reword-hint";
 const NOTICE_MS = 3200;
 const EMPTY_DRAFT: Draft = { changes: [], other: [] };
 const NO_COPY: readonly CopyLiteral[] = [];
@@ -45,6 +56,9 @@ const POINTER_EVENTS = ["pointerdown", "pointerup", "mousedown", "mouseup", "cli
  * carry `hreflang`), and anything the site marks with `data-reword-pass`.
  */
 const PASS = "a[hreflang], [data-reword-pass]";
+/** What a click in the playground's Browse mode leaves alone: it does what it always does. */
+const INTERACTIVE =
+  "a[href], button, input, select, textarea, label, summary, details, video, audio, [role=button], [role=link], [role=tab], [role=checkbox], [role=menuitem], [contenteditable], [tabindex]:not([tabindex='-1'])";
 
 function subscribeMode(onChange: () => void) {
   window.addEventListener(MODE_EVENT, onChange);
@@ -76,9 +90,11 @@ function zone(target: EventTarget | null): "surface" | "chrome" | "page" {
 }
 
 /** Marks the copy under the pointer without touching the page (CSS Custom Highlight API). */
-function mark(target: Target | null) {
-  if (target) CSS.highlights.set(HOVER, new Highlight(target.range));
-  else CSS.highlights.delete(HOVER);
+function mark(target: Target | null, name = HOVER) {
+  if (typeof CSS === "undefined" || !("highlights" in CSS)) return;
+  CSS.highlights.delete(HOVER);
+  CSS.highlights.delete(HINT);
+  if (target) CSS.highlights.set(name, new Highlight(target.range));
   document.documentElement.toggleAttribute("data-reword-hover", target !== null);
 }
 
@@ -91,10 +107,16 @@ function tidy(typed: string, original: string): string {
 const fileName = (file: string) => file.replace(/^.*\//, "");
 const sameLiteral = (a: CopyLiteral, b: CopyLiteral) => a.file === b.file && a.path === b.path;
 
-export default function Reword({ locales, forbid, basePath }: Props) {
+export default function Reword({ locales, forbid, check, structuralKeys, basePath }: Props) {
   const pathname = usePathname();
   const schema = useMemo(() => copySchema(forbid), [forbid]);
-  const api = useMemo(() => createApi(basePath), [basePath]);
+  const api = useMemo(
+    () =>
+      PLAYGROUND
+        ? createPlaygroundApi(basePath, { locales, forbid, check, structuralKeys })
+        : createApi(basePath),
+    [basePath, locales, forbid, check, structuralKeys]
+  );
 
   const lang = useSyncExternalStore(subscribeLang, readLang, () => "");
   const locale =
@@ -103,6 +125,8 @@ export default function Reword({ locales, forbid, basePath }: Props) {
     (locales.length === 1 ? locales[0] : null);
 
   const editing = useSyncExternalStore(subscribeMode, readMode, () => false);
+  // Whether reword reads the page: in Edit mode, and always in the playground.
+  const active = editing || PLAYGROUND;
   // The copy of one locale. After a locale switch the old copy is not this page's.
   const [copy, setCopy] = useState<{ locale: string; literals: readonly CopyLiteral[] } | null>(null);
   const literals = copy?.locale === locale ? copy.literals : NO_COPY;
@@ -122,6 +146,7 @@ export default function Reword({ locales, forbid, basePath }: Props) {
   const update = (next: Session | null) => {
     sessionRef.current = next;
     setSession(next);
+    tell("reword:session", next && { literal: next.literal, text: next.surface.read(), error: next.error });
   };
 
   // Reads overlap (window focus, a save, a revert). Only the answer to the
@@ -139,7 +164,9 @@ export default function Reword({ locales, forbid, basePath }: Props) {
   const loadDraft = useCallback(async () => {
     const request = ++newest.current.draft;
     const result = await api.fetchDraft();
-    if (request === newest.current.draft && result.ok) setDraft(result.value);
+    if (request !== newest.current.draft || !result.ok) return;
+    setDraft(result.value);
+    tell("reword:draft", result.value);
   }, [api]);
 
   // The content files can change behind the page (the agent commits, a file
@@ -163,14 +190,16 @@ export default function Reword({ locales, forbid, basePath }: Props) {
   // Keep the targets in step with the page. Paused while a text is open: the
   // page then holds our surface, and it is read again as soon as it closes.
   useEffect(() => {
-    if (!editing) {
+    if (!active) {
       targetsRef.current = null;
       return;
     }
     let frame = 0;
     const scan = () => {
       frame = 0;
-      if (!sessionRef.current) targetsRef.current = findTargets(document.body, literals);
+      if (sessionRef.current) return;
+      if (locale) api.present?.(document.body, locale);
+      targetsRef.current = findTargets(document.body, literals);
     };
     const observer = new MutationObserver((records) => {
       const onPage = records.some((record) => {
@@ -185,9 +214,9 @@ export default function Reword({ locales, forbid, basePath }: Props) {
       observer.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [editing, literals]);
+  }, [active, literals, locale, api]);
 
-  const begin = (target: Target, point: { x: number; y: number }) => {
+  const begin = (target: Target, point: { x: number; y: number } | null) => {
     hoverRef.current = null;
     mark(null);
     const literal = target.candidates[0];
@@ -234,8 +263,14 @@ export default function Reword({ locales, forbid, basePath }: Props) {
       (all) =>
         all && { ...all, literals: all.literals.map((one) => (sameLiteral(one, literal) ? saved.value.literal : one)) }
     );
-    if (sessionRef.current?.surface === surface) end(after);
-    setNotice("Saved to " + fileName(literal.file));
+    if (sessionRef.current?.surface === surface) {
+      if (api.present) {
+        // Nothing will re-render the page: give the place back, then show the draft in it.
+        end();
+        api.present(document.body, literal.locale);
+      } else end(after);
+    }
+    setNotice(`Saved to ${fileName(literal.file)}${api.kind === "playground" ? ", in this browser" : ""}`);
     await loadDraft();
     return true;
   };
@@ -272,7 +307,9 @@ export default function Reword({ locales, forbid, basePath }: Props) {
 
   /** Opens the review sheet on the whole draft: the text still open is saved first. */
   const review = async () => {
-    if (await commit()) setReviewing(true);
+    if (!(await commit())) return;
+    setReviewing(true);
+    tell("reword:review", null);
   };
 
   const revert = async (change: DraftChange) => {
@@ -295,20 +332,50 @@ export default function Reword({ locales, forbid, basePath }: Props) {
     // A click outside an open text first saves it (the blur started that).
     // Several clicks can wait on one save: only the last of them goes on.
     if (!(await commit()) || click !== clicks.current || sessionRef.current) return;
-    if (hit === "text") setNotice("Not copy: structure, shared by every language, or built in code.");
-    else if (hit) begin(hit, { x: event.clientX, y: event.clientY });
+    if (hit && hit !== "text") begin(hit, { x: event.clientX, y: event.clientY });
+    else if (event.target.closest("a[href]")) setNotice("Links rest in Edit mode. Switch to Browse (Cmd+E) to follow one.");
+    else if (hit === "text") setNotice("Not copy: structure, shared by every language, or built in code.");
+  });
+
+  /** The playground's Browse mode: a plain click on copy opens it, anything interactive is left alone. */
+  const onBrowseClick = useEffectEvent(async (event: MouseEvent) => {
+    const element = event.target instanceof Element ? event.target : null;
+    if (!element || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (zone(element) !== "page" || element.closest(INTERACTIVE)) return;
+    // A drag that selected text is someone copying a sentence, not editing it.
+    if (window.getSelection()?.isCollapsed === false) return;
+    const targets = targetsRef.current;
+    const hit = targets ? hitTest(targets, element, event.clientX, event.clientY) : null;
+    if (!hit || hit === "text") return;
+    event.preventDefault();
+    event.stopPropagation();
+    const click = ++clicks.current;
+    if (!(await commit()) || click !== clicks.current || sessionRef.current) return;
+    begin(hit, { x: event.clientX, y: event.clientY });
   });
 
   const onMove = useEffectEvent((event: PointerEvent) => {
     const targets = targetsRef.current;
+    const element = event.target instanceof Element ? event.target : null;
     const over =
-      targets && !sessionRef.current && zone(event.target) === "page" && event.target instanceof Element
-        ? hitTest(targets, event.target, event.clientX, event.clientY)
+      targets && element && !sessionRef.current && zone(element) === "page" && (editing || !element.closest(INTERACTIVE))
+        ? hitTest(targets, element, event.clientX, event.clientY)
         : null;
     const target = over === "text" ? null : over;
     if (target === hoverRef.current) return;
     hoverRef.current = target;
-    mark(target);
+    mark(target, editing ? HOVER : HINT);
+  });
+
+  /** Asked by the page (a keyboard path): opens the first text inside an element. */
+  const onOpenText = useEffectEvent(async (element: Element) => {
+    const found = targetsRef.current?.list.find((target) => element.contains(target.text ?? target.element));
+    if (!found || !(await commit()) || sessionRef.current) return;
+    const still = targetsRef.current?.list.find((target) => target.element === found.element && target.text === found.text);
+    if (!still) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    still.element.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+    begin(still, null);
   });
 
   const onKey = useEffectEvent((event: KeyboardEvent) => {
@@ -332,6 +399,8 @@ export default function Reword({ locales, forbid, basePath }: Props) {
     void commit();
   });
 
+  const onOpenReview = useEffectEvent(() => void review());
+
   const onShortcut = useEffectEvent((event: KeyboardEvent) => {
     if (event.key.toLowerCase() !== "e" || !(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey) return;
     event.preventDefault();
@@ -342,25 +411,36 @@ export default function Reword({ locales, forbid, basePath }: Props) {
   const onInput = useEffectEvent((event: Event) => {
     const open = sessionRef.current;
     if (!open || zone(event.target) !== "surface") return;
-    const checked = schema.safeParse(tidy(open.surface.read(), open.literal.value));
+    const text = open.surface.read();
+    const checked = schema.safeParse(tidy(text, open.literal.value));
     const error = checked.success ? null : checked.error.issues[0].message;
-    if (error === open.error) return;
+    if (error === open.error) {
+      tell("reword:session", { literal: open.literal, text, error });
+      return;
+    }
     open.surface.node.toggleAttribute("data-invalid", error !== null);
     update({ ...open, error });
   });
 
   useEffect(() => {
-    const shortcut = (event: KeyboardEvent) => onShortcut(event);
-    window.addEventListener("keydown", shortcut, true);
-    return () => window.removeEventListener("keydown", shortcut, true);
+    const listening = new AbortController();
+    const { signal } = listening;
+    window.addEventListener("keydown", (event) => onShortcut(event), { capture: true, signal });
+    window.addEventListener("reword:open-text", (event) => void onOpenText(event.detail.element), { signal });
+    window.addEventListener("reword:open-review", () => onOpenReview(), { signal });
+    return () => listening.abort();
   }, []);
 
   // Capture on window: reword decides before the page hears anything.
   useEffect(() => {
-    if (!editing) return;
+    if (!active) return;
     const listening = new AbortController();
     const options = { capture: true, signal: listening.signal };
-    for (const type of POINTER_EVENTS) window.addEventListener(type, (event) => void onPointer(event), options);
+    if (editing) {
+      for (const type of POINTER_EVENTS) window.addEventListener(type, (event) => void onPointer(event), options);
+    } else {
+      window.addEventListener("click", (event) => void onBrowseClick(event), options);
+    }
     for (const type of ["keydown", "keyup", "keypress"] as const) {
       window.addEventListener(type, (event) => onKey(event), options);
     }
@@ -372,7 +452,7 @@ export default function Reword({ locales, forbid, basePath }: Props) {
       hoverRef.current = null;
       mark(null);
     };
-  }, [editing]);
+  }, [active, editing]);
 
   // A text left open belongs to the page it was on.
   useEffect(
@@ -380,6 +460,7 @@ export default function Reword({ locales, forbid, basePath }: Props) {
       const open = sessionRef.current;
       sessionRef.current = null;
       setSession(null);
+      if (open) tell("reword:session", null);
       open?.surface.close();
     },
     [pathname]
@@ -388,13 +469,15 @@ export default function Reword({ locales, forbid, basePath }: Props) {
   const edits = draft.changes.length;
   const pending = edits > 0 || draft.other.length > 0;
   const ready = copy?.locale === locale;
-  const idle = !editing
+  const idle = !active
     ? ""
     : locale === null
       ? "Set <html lang> to one of your locales"
-      : ready
-        ? "Click a text to edit it"
-        : "Reading the copy";
+      : !ready
+        ? "Reading the copy"
+        : editing
+          ? "Click a text to edit it"
+          : "Click any text to rewrite it";
 
   return (
     <>
@@ -462,6 +545,7 @@ export default function Reword({ locales, forbid, basePath }: Props) {
         isOpen={reviewing}
         onOpenChange={setReviewing}
         draft={draft}
+        kind={api.kind}
         translates={locales.length > 1}
         onRevert={revert}
         onSend={api.sendDraft}

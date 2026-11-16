@@ -11,8 +11,11 @@
   "engines": { "node": ">=22.18" },
   "scripts": {
     "dev": "next dev",
-    "edit": "REWORD=1 next dev --hostname 127.0.0.1",
+    "edit": "REWORD=1 next dev --webpack --hostname 127.0.0.1",
     "draft": "node scripts/draft.ts",
+    "playground": "node scripts/playground.ts",
+    "play": "npm run playground && NEXT_PUBLIC_REWORD_PLAYGROUND=1 next dev --hostname 127.0.0.1",
+    "build:playground": "npm run playground && NEXT_PUBLIC_REWORD_PLAYGROUND=1 next build",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
