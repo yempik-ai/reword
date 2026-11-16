@@ -21,7 +21,7 @@ export type Home = {
     kicker: string;
     /** Above the headline when reword is on the page: the playground, or `npm run edit`. */
     invite: string;
-    /** The headline is a proof correction: before, a struck word, the word put in, after. */
+    /** The headline is a correction: before, the old word, the word stuck over it, after. */
     before: string;
     struck: string;
     inserted: string;
