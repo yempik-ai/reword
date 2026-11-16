@@ -184,24 +184,24 @@ Publish the reword draft: the uncommitted copy edits in this repository. Run `np
 
 ### What the agent reads
 
-`npm run draft` prints the brief. This one is real output from this repository, with the procedure shortened:
+`npm run draft` prints the brief. This one is real output from this repository (the typo is planted: the website dares you to fix it), with the procedure shortened:
 
 ```markdown
 # reword draft
 
 1 copy edit in the working tree, each written by the author in the locale shown.
 
-## 1. en · src/content/home.ts:69 · `home.en.hero.note`
+## 1. en · src/content/home.ts:74 · `home.en.hero.note`
 
 Before:
-> No CMS. No database. No prompt for a typo.
+> No CMS. No database. No prompt for a tpyo.
 
 After:
-> No CMS. No database. No tokens spent on a typo.
+> No CMS. No database. No prompt for a typo.
 
 Same copy in the other locales:
-- it · src/content/home.ts:270 · `home.it.hero.note`
-  > Niente CMS. Niente database. Niente prompt per un refuso.
+- it · src/content/home.ts:285 · `home.it.hero.note`
+  > Niente CMS. Niente database. Niente prompt per un rfeuso.
 
 ## Procedure
 
