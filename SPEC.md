@@ -81,12 +81,12 @@ export default defineConfig({
 
    ```json
    {
-     "edit": "REWORD=1 next dev --webpack --hostname 127.0.0.1",
+     "edit": "REWORD=1 next dev --hostname 127.0.0.1",
      "draft": "node scripts/draft.ts"
    }
    ```
 
-   Keep `--hostname 127.0.0.1`. Keep any options the project's own `dev` script needs. `--webpack` is there because Turbopack in Next.js 16.4 fails to resolve `next/font/google` once a page extension is added. If the site does not use `next/font`, or `npm run edit` serves pages without it, Turbopack is fine.
+   Keep `--hostname 127.0.0.1`. Keep any options the project's own `dev` script needs.
 
 4. **Ignore.** Add `/.reword/` to `.gitignore`.
 

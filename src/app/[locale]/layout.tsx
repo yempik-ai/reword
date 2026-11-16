@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import localFont from "next/font/local";
 import config from "../../../reword.config";
 import Footer from "@/components/Footer";
 import Nav from "@/components/Nav";
@@ -13,12 +13,15 @@ import { pageMetadata } from "@/lib/seo";
 import RewordMount from "@/reword/Mount";
 import "../globals.css";
 
-const sans = Geist({ subsets: ["latin", "latin-ext"], variable: "--font-sans" });
-const mono = Geist_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono" });
-const serif = Instrument_Serif({
-  subsets: ["latin", "latin-ext"],
-  weight: "400",
-  style: ["normal", "italic"],
+// The fonts are in the repository (src/app/fonts, SIL Open Font License), so
+// the dev server and the build never wait on a font service.
+const sans = localFont({ src: "../fonts/geist-latin-wght-normal.woff2", weight: "100 900", variable: "--font-sans" });
+const mono = localFont({ src: "../fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-mono" });
+const serif = localFont({
+  src: [
+    { path: "../fonts/instrument-serif-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/instrument-serif-latin-400-italic.woff2", weight: "400", style: "italic" },
+  ],
   variable: "--font-serif",
 });
 

@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="media/demo.gif" alt="reword in use: a paragraph on a website is clicked and rewritten in place, a review sheet shows the word diff, and the draft is sent to a coding agent" width="860">
+  <img src="media/demo.gif" alt="The reword website, edited by a visitor: the headline is clicked and retyped, a typo is fixed, an em dash is refused by the site's house rule, the review sheet shows the word diff, and Send opens a sheet titled You just used reword" width="860">
 </p>
 
 ## What is reword?
@@ -52,9 +52,9 @@ You already know what you want to say. Typing it is faster than describing it. W
 
 ## See it
 
-| Edit in place | Review the draft |
+| Edit in place, on the live site | Press Send, get the way to install it |
 |---|---|
-| ![A word of the headline is open for editing in place, framed with a dashed outline, in the headline's own typography. The reword bar shows the file, the line and the address of the string](media/edit.png) | ![The review sheet lists one edit as a word diff: removed words struck through, new words highlighted, and a Send to agent button](media/review.png) |
+| ![The word "clicking" in the headline is being retyped as "typing" in the headline's own typography. Beside it, a dark panel shows the change to home.ts line 71 as a diff while it is typed](media/edit.png) | ![A sheet titled "You just used reword." It gives the one sentence to paste into a coding agent, then the brief built from the visitor's own edits](media/payoff.png) |
 
 ## Quick start
 
@@ -123,12 +123,10 @@ reword is one folder, one route file and a few lines of config. No package to in
 
    ```json
    {
-     "edit": "REWORD=1 next dev --webpack --hostname 127.0.0.1",
+     "edit": "REWORD=1 next dev --hostname 127.0.0.1",
      "draft": "node scripts/draft.ts"
    }
    ```
-
-   `--webpack`: on Next.js 16.4, Turbopack fails to resolve `next/font/google` once a page extension is added. Without `next/font`, Turbopack works too.
 
    Copy [`scripts/draft.ts`](scripts/draft.ts) too. It is six lines. Add `/.reword/` to your `.gitignore`: a custom agent command writes its log there.
 

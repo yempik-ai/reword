@@ -154,7 +154,9 @@ function anchor(label: string, href: string, models: HTMLAnchorElement[], basePa
   const index = models.findIndex((model) => sameHref(model.getAttribute("href"), href, basePath));
   if (index < 0) {
     const created = document.createElement("a");
-    created.href = href.startsWith("/") ? `${basePath}${href}` : href;
+    // A link the visitor typed. Only web addresses and site paths become
+    // links: anything else (`javascript:` above all) stays plain text.
+    if (/^(https?:\/\/|mailto:|\/|#)/i.test(href)) created.href = href.startsWith("/") ? `${basePath}${href}` : href;
     created.textContent = label;
     return created;
   }
