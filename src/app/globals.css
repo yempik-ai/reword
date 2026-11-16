@@ -1,42 +1,34 @@
 /* ---------------------------------------------------------------------------
    The site's design system: one file, plain CSS, a handful of tokens.
 
-   A proof with a cursor. The page is set like a galley proof: text on the
-   right, the proofreader's notes in a margin on the left, sections opened by
-   a rule and a pilcrow. Paper, ink and one red pencil. Serif for what you
-   read, sans for what you skim, mono for what you run.
+   The idea is the tool's own: a new word stuck over the old one. So the page
+   is a desk, and everything on it is a piece of paper someone cut out and
+   stuck down: a sticker for what is new, a marker stroke for what is gone,
+   tape to hold things, a label maker for the section names, a receipt that
+   prints your draft.
 
-   Rules of the house:
-   - One accent (#ff5433). As small text on paper it is --accent-ink (AA).
-   - Flat. The one depth cue is the HUD box (an ink border and a hard ink
-     shadow), and it is kept for things you operate: the install box, the
-     ticket, the draft, the ending. Text is never in a box.
-   - Motion is decoration, never a gate. One-shot only, under 300ms, off
-     under prefers-reduced-motion. Nothing loops.
-   - Copy reaches the DOM untouched: case, spacing and joins are done here,
-     in CSS, never in components (reword finds copy by equality).
+   Three colours, each with one job. Yellow is what you put in. Red is what
+   you took out or were refused. Blue is the pen: links and focus.
 --------------------------------------------------------------------------- */
 
 :root {
-  --paper: #f6f2e9;
-  --card: #fffdf8;
-  --ink: #131311;
-  --muted: rgba(19, 19, 17, 0.68);
-  --rule: rgba(19, 19, 17, 0.14);
-  --accent: #ff5433; /* marks and fills */
-  --accent-ink: #c2300f; /* the accent as text on paper (AA) */
-  --wash: rgba(255, 84, 51, 0.1);
-  --on-ink: #f6f2e9;
-  --on-ink-muted: rgba(246, 242, 233, 0.66);
-  --on-ink-rule: rgba(246, 242, 233, 0.16);
-  --hud: 4px 4px 0 var(--ink);
+  --desk: #e7e9ec;
+  --dot: #c5c9d0;
+  --paper: #ffffff;
+  --ink: #111315;
+  --muted: #555a61; /* 6.2:1 on the desk, 7:1 on paper */
+  --hair: rgba(17, 19, 21, 0.12);
+  --tape: #ffdf3d; /* what you put in: stickers, highlighter, tape */
+  --marker: #c4211a; /* what you took out, or were refused */
+  --pen: #2447f0; /* links and focus */
+
+  --lift: 0 1px 1px rgba(17, 19, 21, 0.06), 0 12px 26px -14px rgba(17, 19, 21, 0.38);
   --max: 1200px;
-  --margin: 176px; /* the proof's margin, where the notes go */
   --gutter: clamp(16px, 4vw, 40px);
-  --serif: var(--font-serif), "Iowan Old Style", Palatino, Georgia, serif;
+
+  --display: var(--font-display), "Arial Narrow", system-ui, sans-serif;
   --sans: var(--font-sans), system-ui, sans-serif;
   --mono: var(--font-mono), ui-monospace, Menlo, monospace;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {
@@ -47,34 +39,32 @@
 
 html {
   scroll-padding-top: 96px;
+  overflow-x: clip;
 }
 
 body {
-  background: var(--paper);
+  /* A cutting mat: one dot every 22 pixels. Painted once, never animated. */
+  background: var(--desk) radial-gradient(circle, var(--dot) 1px, transparent 1.5px) 0 0 / 22px 22px;
   color: var(--ink);
   font: 400 17px / 1.6 var(--sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: clip;
 }
 
 a {
   color: inherit;
 }
 
-button {
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
 ::selection {
-  background: var(--accent);
+  background: var(--tape);
   color: var(--ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent-ink);
+  outline: 3px solid var(--pen);
   outline-offset: 3px;
+  border-radius: 2px;
 }
 
 .sr-only {
@@ -94,7 +84,8 @@ button {
   padding: 10px 14px;
   background: var(--ink);
   color: var(--paper);
-  font: 500 13px / 1 var(--mono);
+  font: 600 14px / 1 var(--sans);
+  border-radius: 8px;
 }
 
 .skip:focus {
@@ -112,24 +103,43 @@ main:focus {
   outline: none;
 }
 
-/* Small mono text: labels, notes, the machine's voice. */
-.kicker,
-.sheet-label,
-.fact-label,
-.hero-note,
-.hero-source,
-.code-caption,
-.rule figcaption,
-.install-label,
-.essay-list time,
-.back,
-.page-margin time {
-  font: 500 12.5px / 1.5 var(--mono);
-  letter-spacing: 0.01em;
-  color: var(--muted);
+/* ------------------------------- the pieces ------------------------------ */
+/* Things that are stuck on the desk share three gestures. */
+
+/* A strip of tape across the top edge, torn by hand at both ends. */
+.install::before,
+.ticket::before,
+.loop li::before,
+.prose::before,
+.rule::before {
+  content: "";
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  width: 104px;
+  height: 27px;
+  translate: -50% 0;
+  rotate: -3deg;
+  background: rgba(255, 223, 61, 0.86);
+  box-shadow: 0 1px 2px rgba(17, 19, 21, 0.14);
+  clip-path: polygon(0 0, 100% 0, 97.5% 22%, 100% 42%, 98% 63%, 100% 82%, 97.5% 100%, 0 100%, 2.5% 80%, 0 60%, 2% 40%, 0 18%);
+  pointer-events: none;
 }
 
-/* --------------------------------- nav ---------------------------------- */
+/* Headings are cut from one heavy, narrow face. */
+.hero-title,
+.sheet-body h2,
+.closing h2,
+.page-title,
+.payoff-head h2 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-variation-settings: "wdth" 80;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+/* ---------------------------------- nav ---------------------------------- */
 
 .nav {
   position: sticky;
@@ -137,164 +147,184 @@ main:focus {
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 26px;
   padding: 16px 0;
-  background: var(--paper);
-  border-bottom: 1px solid var(--ink);
+  background: var(--desk);
+  border-bottom: 1px solid var(--hair);
 }
 
 .nav-brand {
   text-decoration: none;
 }
 
+/* The name, with the new word stuck over the old one. */
 .wordmark {
   display: inline-flex;
-  align-items: baseline;
-  font: 400 28px / 1 var(--serif);
-  letter-spacing: -0.01em;
+  align-items: center;
+  font: 800 27px / 1 var(--display);
+  font-variation-settings: "wdth" 82;
+  letter-spacing: -0.04em;
 }
 
-.wordmark-caret {
-  width: 0.3em;
-  height: 0.2em;
-  margin: 0 -0.06em;
-  color: var(--accent);
-  translate: 0 0.2em;
+.wordmark-sticker {
+  display: inline-block;
+  margin-left: 0.05em;
+  padding: 0.1em 0.2em 0.12em;
+  rotate: -4deg;
+  background: var(--tape);
+  border-radius: 0.14em;
+  box-shadow: 0 1px 0 rgba(17, 19, 21, 0.1), 0 5px 10px -6px rgba(17, 19, 21, 0.5);
 }
 
 .nav-links {
   display: flex;
   gap: 24px;
   margin-left: auto;
-  font: 500 13px / 1 var(--mono);
+  font-size: 15px;
+  font-weight: 500;
 }
 
-.nav-links a,
-.lang a {
+.nav-links a {
   text-decoration: none;
-  color: var(--muted);
+  background: linear-gradient(var(--tape), var(--tape)) 0 88% / 0 0.42em no-repeat;
+  transition: background-size 0.18s ease;
 }
 
-.nav-links a:hover,
-.lang a:hover {
-  color: var(--ink);
+/* A stroke of highlighter under the link. */
+.nav-links a:hover {
+  background-size: 100% 0.42em;
 }
 
 .lang {
   display: flex;
-  gap: 4px;
-  font: 500 12px / 1 var(--mono);
+  gap: 2px;
+  font: 600 12px / 1 var(--mono);
   letter-spacing: 0.06em;
 }
 
 .lang a {
-  padding: 6px 7px;
-  border-radius: 6px;
+  padding: 7px 8px;
+  border-radius: 5px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.lang a:hover {
+  color: var(--ink);
 }
 
 .lang a[aria-current] {
-  background: var(--ink);
-  color: var(--paper);
+  rotate: -3deg;
+  background: var(--tape);
+  color: var(--ink);
+  box-shadow: 0 4px 8px -5px rgba(17, 19, 21, 0.5);
 }
 
-/* --------------------------------- hero --------------------------------- */
+/* ---------------------------------- hero --------------------------------- */
 
 .hero {
-  display: grid;
-  gap: 48px 64px;
-  padding: clamp(36px, 6vw, 80px) 0 0;
+  padding: clamp(36px, 5vw, 72px) 0 0;
 }
 
-.hero-main {
-  min-width: 0;
+@media (min-width: 1080px) {
+  .hero-live {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 56px;
+    align-items: start;
+  }
 }
 
-/* Where reword is on the page, the invitation replaces the kicker: in red pencil. */
+.kicker,
+.hero-invite {
+  font: 500 15px / 1.5 var(--sans);
+  color: var(--muted);
+}
+
+/* The dare, in pen, with an arrow drawn towards the headline. */
 .hero-invite {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font: 500 13px / 1.5 var(--mono);
-  color: var(--accent-ink);
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--pen);
+  font-weight: 600;
 }
 
 .invite-caret {
   flex: none;
-  width: 14px;
-  height: 10px;
-  color: var(--accent);
-  translate: 0 1px;
+  width: 34px;
+  height: 30px;
+  margin-top: 2px;
 }
 
 .hero-title {
   max-width: 12ch;
-  margin-top: 20px;
-  font: 400 clamp(54px, 8.4vw, 108px) / 0.95 var(--serif);
-  letter-spacing: -0.025em;
-  text-wrap: balance;
+  margin-top: 10px;
+  font-size: clamp(52px, 8vw, 108px);
+  line-height: 0.88;
+  letter-spacing: -0.045em;
 }
 
-/* The headline is a proof: one word struck, one word written in. */
+/* The old word: still legible, crossed out with a marker in one stroke. */
 .hero-title del {
-  color: var(--muted);
-  text-decoration: line-through;
-  text-decoration-color: var(--accent);
-  text-decoration-thickness: 0.055em;
+  color: rgba(17, 19, 21, 0.34);
+  text-decoration: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 40' preserveAspectRatio='none'%3E%3Cpath d='M3 24C60 14 118 27 178 17s86 6 119-3' fill='none' stroke='%23c4211a' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E")
+    center 58% / 100% 46% no-repeat;
 }
 
+/* The new word: a sticker, put on by hand and not quite straight. */
 .hero-title ins {
-  color: var(--accent-ink);
-  font-style: italic;
+  display: inline-block;
+  margin: 0.06em 0 0 -0.03em;
+  padding: 0.02em 0.14em 0.1em;
+  rotate: -2.5deg;
+  background: var(--tape);
+  border-radius: 0.07em;
+  box-shadow: 0 1px 0 rgba(17, 19, 21, 0.1), 0 0.12em 0.22em -0.1em rgba(17, 19, 21, 0.55);
   text-decoration: none;
 }
 
 .hero-lede {
   max-width: 54ch;
-  margin-top: 30px;
-  font-size: clamp(18px, 1.6vw, 20px);
-  line-height: 1.55;
+  margin-top: 26px;
+  font-size: clamp(18px, 1.7vw, 21px);
+  line-height: 1.5;
 }
 
 .hero-note {
   margin-top: 14px;
-  font-size: 13.5px;
+  font: 500 13.5px / 1.5 var(--mono);
+  color: var(--muted);
 }
 
-/* The planted typo, with a spellchecker's squiggle (components/play/TypoMark). */
+/* The planted typo wears a spellchecker's squiggle (components/play/TypoMark). */
 ::highlight(play-typo) {
-  text-decoration: underline wavy var(--accent);
-  text-decoration-thickness: 1.5px;
+  text-decoration: underline wavy var(--marker);
 }
 
 .hero-source {
   display: inline-block;
-  margin-top: 16px;
-  text-decoration: underline;
-  text-decoration-color: var(--rule);
-  text-underline-offset: 4px;
+  margin-top: 18px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--pen);
+  text-underline-offset: 3px;
 }
 
-.hero-source:hover {
-  color: var(--ink);
-  text-decoration-color: var(--accent);
-}
-
-@media (min-width: 1080px) {
-  .hero-live {
-    grid-template-columns: minmax(0, 1fr) 384px;
-    align-items: start;
-  }
-}
-
-/* ------------------------------ install box ----------------------------- */
+/* -------------------------------- install -------------------------------- */
+/* The first thing to do with reword: get it. A black card taped to the desk,
+   with index tabs for the three ways in. */
 
 .install {
-  max-width: 680px;
-  margin-top: 32px;
-  background: var(--card);
-  border: 1.5px solid var(--ink);
-  border-radius: 12px;
-  box-shadow: var(--hud);
+  position: relative;
+  max-width: 700px;
+  margin-top: 34px;
+  rotate: -0.6deg;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 14px;
+  box-shadow: var(--lift);
 }
 
 .install-head {
@@ -302,90 +332,104 @@ main:focus {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 16px;
-  padding: 8px 8px 8px 16px;
-  border-bottom: 1px solid var(--rule);
+  gap: 10px 16px;
+  padding: 18px 18px 0;
+}
+
+.install-label {
+  font: 600 13px / 1 var(--mono);
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .install-ways {
   display: flex;
-  gap: 2px;
-  padding: 2px;
-  background: var(--paper);
-  border-radius: 8px;
+  gap: 4px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 
 .install-ways button {
-  min-height: 30px;
-  padding: 0 10px;
+  min-height: 32px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 7px;
   background: none;
-  color: var(--muted);
-  font: 500 12px / 1.2 var(--mono);
+  color: rgba(255, 255, 255, 0.72);
+  font: 600 13px / 1 var(--sans);
+  cursor: pointer;
 }
 
 .install-ways button:hover {
-  color: var(--ink);
+  color: var(--paper);
 }
 
 .install-ways button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--tape);
+  color: var(--ink);
 }
 
 .install-command {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  padding: 18px 16px 12px;
+  gap: 14px;
+  padding: 18px;
 }
 
 .install-command pre {
   flex: 1;
   min-width: 0;
-  font: 400 14px / 1.6 var(--mono);
+  font: 500 15px / 1.55 var(--mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+.install-hint {
+  padding: 0 18px 18px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+/* Copy: a small sticker you press. */
+.copy,
 .install-copy {
   flex: none;
-  min-height: 40px;
-  padding: 0 18px;
-  border: 1.5px solid var(--ink);
+  min-height: 38px;
+  padding: 0 14px;
+  rotate: 2deg;
+  border: 0;
   border-radius: 8px;
-  background: var(--accent);
+  background: var(--tape);
   color: var(--ink);
-  font: 600 13px / 1 var(--mono);
-  transition: background 0.16s ease, color 0.16s ease;
+  font: 700 13px / 1 var(--sans);
+  cursor: pointer;
+  box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.6);
+  transition: rotate 0.16s ease, translate 0.16s ease;
 }
 
+.copy:hover,
 .install-copy:hover {
-  background: var(--ink);
-  color: var(--paper);
+  rotate: -2deg;
+  translate: 0 -1px;
 }
 
-.install-hint {
-  padding: 0 16px 14px;
-  font-size: 14px;
-  color: var(--muted);
-}
-
-/* --------------------------------- desk --------------------------------- */
-/* The proofreader's desk beside the headline: a paper ticket of corrections
-   to try, and the draft they make, on ink, as a developer would read it. */
+/* ---------------------------------- desk --------------------------------- */
+/* Beside the headline: a card of things to try, and a receipt that prints
+   the draft those edits make. */
 
 .desk {
   display: grid;
-  gap: 24px;
+  gap: 30px;
   align-content: start;
+  margin-top: 44px;
+  filter: drop-shadow(0 10px 12px rgba(17, 19, 21, 0.14));
 }
 
 @media (min-width: 1080px) {
   .desk {
     position: sticky;
     top: 96px;
+    margin-top: 6px;
   }
 }
 
@@ -396,91 +440,104 @@ main:focus {
   }
 }
 
+/* An index card of things to try. */
 .ticket {
-  padding: 16px 18px 6px;
-  background: var(--card);
-  border: 1.5px solid var(--ink);
-  border-radius: 12px;
-  box-shadow: var(--hud);
+  position: relative;
+  rotate: 1.2deg;
+  padding: 24px 22px 10px;
+  background: var(--paper);
+  border-radius: 4px;
 }
 
 .ticket-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.ticket h2 {
-  font: 400 26px / 1.1 var(--serif);
-  letter-spacing: -0.01em;
+.ticket-head h2 {
+  font: 800 25px / 1 var(--display);
+  font-variation-settings: "wdth" 84;
+  letter-spacing: -0.03em;
 }
 
+/* The score, on a round sticker. */
 .ticket-count {
-  font: 600 13px / 1 var(--mono);
-  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin: -6px -4px 0 0;
+  rotate: 8deg;
+  border-radius: 50%;
+  background: var(--tape);
+  font: 700 14px / 1 var(--mono);
 }
 
 .ticket-lede {
-  margin-top: 6px;
-  font-size: 14px;
-  line-height: 1.5;
+  margin-top: 8px;
+  font-size: 14.5px;
+  line-height: 1.45;
   color: var(--muted);
 }
 
 .marks {
-  margin-top: 12px;
+  margin-top: 14px;
   list-style: none;
 }
 
 .mark {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
-  gap: 2px 12px;
-  padding: 12px 0;
-  border-top: 1px solid var(--rule);
+  position: relative;
+  padding: 11px 0 11px 34px;
+  border-top: 1px dashed var(--hair);
 }
 
-/* The box in the margin of each correction; filled in red pencil when done. */
 .mark::before {
   content: "";
-  grid-row: span 2;
-  width: 14px;
-  height: 14px;
-  margin-top: 4px;
-  border: 1.5px solid var(--ink);
-  border-radius: 3px;
+  position: absolute;
+  left: 2px;
+  top: 14px;
+  width: 19px;
+  height: 19px;
+  border: 2px solid var(--ink);
+  border-radius: 5px;
+  background: var(--paper);
 }
 
+/* Done: ticked in pen. */
 .mark[data-done]::before {
-  background: var(--accent) linear-gradient(var(--ink), var(--ink)) center / 6px 6px no-repeat;
-  border-color: var(--ink);
+  border-color: var(--pen);
+  background: var(--paper)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3.5 10.5l4.2 4.6L17 4' fill='none' stroke='%232447f0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 15px no-repeat;
 }
 
 .mark-label {
-  justify-self: start;
   padding: 0;
   border: 0;
-  background: linear-gradient(var(--accent), var(--accent)) no-repeat 0 58% / 0 2px;
-  font: 600 15px / 1.4 var(--sans);
+  background: none;
+  color: var(--ink);
+  font: 650 16px / 1.3 var(--sans);
   text-align: left;
-  transition: background-size 0.28s var(--ease-out), color 0.16s ease;
+  cursor: pointer;
 }
 
 .mark-label:hover {
-  color: var(--accent-ink);
+  color: var(--pen);
 }
 
-/* Done: struck through, the way a proofreader ticks off a correction. */
 .mark[data-done] .mark-label {
-  background-size: 100% 2px;
   color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--pen);
+  text-decoration-thickness: 2px;
 }
 
 .mark-note {
-  grid-column: 2;
-  font-size: 13.5px;
-  line-height: 1.5;
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 1.4;
   color: var(--muted);
 }
 
@@ -488,306 +545,332 @@ main:focus {
   color: var(--ink);
 }
 
-/* The draft, live: the change each edit makes to the source, as a diff. */
+/* A till receipt: the draft, printed as you type. */
 .tree {
-  background: var(--ink);
-  color: var(--on-ink);
-  border: 1.5px solid var(--ink);
-  border-radius: 12px;
-  box-shadow: var(--hud);
-  font: 400 12.5px / 1.55 var(--mono);
-}
-
-.tree-head,
-.tree-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 12px;
-  padding: 12px 14px;
+  rotate: -0.9deg;
+  padding: 18px 18px 26px;
+  background: var(--paper);
+  font: 500 12.5px / 1.55 var(--mono);
+  /* The torn edge of the roll. */
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
 }
 
 .tree-head {
-  border-bottom: 1px solid var(--on-ink-rule);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px dashed var(--ink);
 }
 
-.tree h2 {
-  font: 600 13px / 1.3 var(--mono);
+.tree-head h2 {
+  font: 800 17px / 1 var(--display);
+  font-variation-settings: "wdth" 86;
+  letter-spacing: -0.01em;
 }
 
 .tree-where,
 .tree-empty,
 .hunk-where {
-  color: var(--on-ink-muted);
+  color: var(--muted);
 }
 
 .tree-body {
-  max-height: 360px;
-  padding: 4px 14px 14px;
+  max-height: 46vh;
   overflow-y: auto;
 }
 
 .tree-empty {
-  padding-top: 10px;
+  padding-top: 14px;
 }
 
 .hunk {
-  padding-top: 12px;
-}
-
-.hunk + .hunk {
-  margin-top: 12px;
-  border-top: 1px dashed var(--on-ink-rule);
-}
-
-.hunk-where {
-  overflow-wrap: anywhere;
+  padding: 12px 0;
+  border-bottom: 1.5px dashed var(--hair);
 }
 
 .hunk-state {
-  color: var(--accent);
-  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--pen);
+  color: var(--paper);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+
+.hunk[data-refused] .hunk-state {
+  background: var(--marker);
 }
 
 .line {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
-  margin-top: 4px;
-}
-
-.line-code {
-  white-space: pre-wrap;
+  display: flex;
+  gap: 8px;
   overflow-wrap: anywhere;
 }
 
+.line-sign {
+  flex: none;
+  width: 1ch;
+  color: var(--muted);
+}
+
 .line-out {
-  color: var(--on-ink-muted);
+  color: var(--muted);
 }
 
 .line-out mark {
   background: none;
-  color: var(--on-ink);
+  color: var(--marker);
   text-decoration: line-through;
-  text-decoration-color: var(--accent);
-  text-decoration-thickness: 2px;
 }
 
 .line-in mark {
-  background: var(--accent);
+  background: var(--tape);
   color: var(--ink);
-  border-radius: 2px;
-}
-
-.line-in .line-sign {
-  color: var(--accent);
 }
 
 .hunk-error {
-  margin-top: 8px;
-  color: var(--accent);
+  margin-top: 6px;
+  color: var(--marker);
+  font-weight: 700;
 }
 
 .tree-foot {
+  display: flex;
   align-items: center;
-  border-top: 1px solid var(--on-ink-rule);
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  font-weight: 700;
 }
 
 .tree-foot button {
-  min-height: 32px;
-  padding: 0 12px;
+  min-height: 34px;
+  padding: 0 14px;
   border: 0;
-  border-radius: 7px;
-  background: var(--accent);
-  color: var(--ink);
-  font: 600 12.5px / 1 var(--mono);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 13px / 1 var(--sans);
+  cursor: pointer;
 }
 
 .tree-foot button:hover {
-  background: var(--on-ink);
+  background: var(--pen);
 }
 
-.tree :focus-visible {
-  outline-color: var(--accent);
-}
-
-/* -------------------------------- sheets -------------------------------- */
-/* A section of the proof: opened by a rule, named in the margin. */
+/* -------------------------------- sections ------------------------------- */
 
 .sheet {
-  display: grid;
-  grid-template-columns: var(--margin) minmax(0, 1fr);
-  gap: 12px 40px;
-  margin-top: clamp(72px, 10vw, 128px);
-  padding-top: 16px;
-  border-top: 1px solid var(--ink);
+  padding-top: clamp(84px, 11vw, 150px);
 }
 
+/* The section's name, off a label maker. */
 .sheet-label {
-  align-self: start;
-  padding-top: 6px;
-  color: var(--accent-ink);
+  display: inline-block;
+  rotate: -1.5deg;
+  padding: 6px 10px 5px;
+  border-radius: 3px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 11.5px / 1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 10px -7px rgba(17, 19, 21, 0.6);
 }
 
-@media (min-width: 900px) {
-  .sheet-label {
-    position: sticky;
-    top: 92px;
-  }
-}
-
-.sheet-body {
-  min-width: 0;
-}
-
-.sheet h2,
-.closing h2,
-.page-title {
-  max-width: 18ch;
-  font: 400 clamp(36px, 5vw, 64px) / 1.02 var(--serif);
-  letter-spacing: -0.02em;
-  text-wrap: balance;
+.sheet-body h2 {
+  max-width: 15ch;
+  margin-top: 20px;
+  font-size: clamp(36px, 5.6vw, 72px);
+  line-height: 0.94;
 }
 
 .sheet-lede {
-  max-width: 62ch;
-  margin-top: 18px;
+  max-width: 60ch;
+  margin-top: 20px;
   font-size: 19px;
+  line-height: 1.5;
   color: var(--muted);
 }
 
-/* The loop: three verbs in the red pencil, each with its line. */
+.sheet h3,
+.closing h3,
+.payoff h3 {
+  font: 800 23px / 1.1 var(--display);
+  font-variation-settings: "wdth" 86;
+  letter-spacing: -0.02em;
+}
+
+/* The loop: three notes, numbered, stuck in a row and none of them straight. */
 .loop {
-  margin-top: 36px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+  margin-top: 56px;
   list-style: none;
-  border-top: 1px solid var(--rule);
+  counter-reset: step;
 }
 
 .loop li {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) minmax(0, 2.6fr);
-  gap: 6px 32px;
-  padding: 22px 0;
-  border-bottom: 1px solid var(--rule);
+  gap: 10px;
+  align-content: start;
+  padding: 44px 24px 26px;
+  background: var(--paper);
+  border-radius: 4px;
+  box-shadow: var(--lift);
+  counter-increment: step;
 }
 
-.loop h3 {
-  font: italic 400 44px / 1 var(--serif);
-  color: var(--accent-ink);
+.loop li:nth-child(1) {
+  rotate: -1.4deg;
+}
+
+.loop li:nth-child(2) {
+  rotate: 0.9deg;
+  translate: 0 14px;
+}
+
+.loop li:nth-child(3) {
+  rotate: -0.5deg;
+}
+
+.loop li::after {
+  content: counter(step);
+  position: absolute;
+  left: 18px;
+  top: -22px;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  rotate: -8deg;
+  border-radius: 50%;
+  background: var(--tape);
+  font: 800 28px / 1 var(--display);
+  box-shadow: 0 6px 10px -6px rgba(17, 19, 21, 0.5);
+}
+
+/* Tape goes to the right on these, the number sticker takes the left. */
+.loop li::before {
+  left: 68%;
 }
 
 .loop p,
-.facts li > p:last-child,
+.facts p:not(.fact-label),
 .starts p,
-.faq p,
-.agents dd {
+.agents dd,
+.faq p {
   color: var(--muted);
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-.loop p {
-  max-width: 62ch;
-  padding-top: 4px;
-}
-
+/* The facts: no paper, only a line of ink above each. */
 .facts {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 48px;
-  margin-top: 36px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px 32px;
+  margin-top: 56px;
   list-style: none;
 }
 
 .facts li {
-  padding: 22px 0 24px;
-  border-top: 1px solid var(--rule);
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding-top: 18px;
+  border-top: 2.5px solid var(--ink);
 }
 
+/* Highlighted, the way you mark the line that matters. */
 .fact-label {
-  color: var(--accent-ink);
+  justify-self: start;
+  padding: 1px 6px;
+  background: var(--tape);
+  font: 700 12px / 1.5 var(--mono);
 }
 
-.facts h3,
-.starts h3,
-.faq h3,
-.agents dt {
-  font: 400 25px / 1.15 var(--serif);
-  letter-spacing: -0.01em;
-}
-
-.facts h3 {
-  margin-top: 6px;
-}
-
-.facts li > p:last-child {
-  margin-top: 8px;
-  font-size: 16px;
-}
-
+/* The house rule, on a torn sheet of a ruled notebook. */
 .rule {
-  max-width: 760px;
-  margin-top: 28px;
+  position: relative;
+  max-width: 720px;
+  margin-top: 64px;
+  rotate: 0.7deg;
+  padding: 26px 24px 22px 54px;
+  background: var(--paper) linear-gradient(90deg, transparent 39px, rgba(196, 33, 26, 0.35) 39px 40.5px, transparent 40.5px);
+  border-radius: 3px;
+  box-shadow: var(--lift);
 }
 
-.rule pre,
-.code pre {
-  font: 400 12.5px / 1.6 var(--mono);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+.rule figcaption {
+  font-size: 15px;
+  color: var(--muted);
 }
 
 .rule pre {
-  margin-top: 10px;
-  padding: 16px;
-  border-radius: 10px;
-  background: var(--ink);
-  color: var(--on-ink);
+  margin-top: 12px;
+  overflow-x: auto;
+  font: 500 13.5px / 1.6 var(--mono);
 }
 
-/* --------------------------------- code --------------------------------- */
+/* --------------------------------- code ---------------------------------- */
 
 .code {
   position: relative;
-  border-radius: 10px;
+  margin-top: auto;
+  border-radius: 12px;
   background: var(--ink);
-  color: var(--on-ink);
-}
-
-.code pre {
-  padding: 16px 72px 16px 16px;
+  color: var(--paper);
 }
 
 .sheet-body > .code {
   max-width: 760px;
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
-.code-caption {
-  margin-top: 28px;
+.code pre {
+  padding: 18px 86px 18px 18px;
+  overflow-x: auto;
+  font: 500 13.5px / 1.6 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.copy {
+.code .copy {
   position: absolute;
   top: 10px;
   right: 10px;
-  padding: 6px 10px;
-  border: 1px solid var(--on-ink-rule);
-  border-radius: 6px;
-  background: none;
-  color: var(--on-ink);
-  font: 500 11.5px / 1 var(--mono);
+  min-height: 32px;
+  padding: 0 11px;
+  font-size: 12px;
 }
 
-.copy:hover {
-  border-color: var(--on-ink);
+.code-caption {
+  margin-top: 36px;
+  font-size: 15px;
+  color: var(--muted);
 }
 
-/* ------------------------------ comparison ------------------------------ */
+/* ------------------------------ comparison ------------------------------- */
+/* Squared paper, and one column gone over with the highlighter. */
 
 .table-wrap {
-  margin-top: 36px;
+  margin-top: 56px;
   overflow-x: auto;
-  border-top: 1.5px solid var(--ink);
-  border-bottom: 1.5px solid var(--ink);
+  background: var(--paper)
+    linear-gradient(rgba(36, 71, 240, 0.07) 1px, transparent 1px) 0 0 / 100% 22px,
+    linear-gradient(90deg, rgba(36, 71, 240, 0.07) 1px, transparent 1px) 0 0 / 22px 100%;
+  background-color: var(--paper);
+  border-radius: 4px;
+  box-shadow: var(--lift);
 }
 
 .compare {
@@ -800,9 +883,9 @@ main:focus {
 
 .compare th,
 .compare td {
-  padding: 16px 18px;
+  padding: 16px 20px;
   vertical-align: top;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--hair);
 }
 
 .compare tbody tr:last-child > * {
@@ -810,14 +893,13 @@ main:focus {
 }
 
 .compare thead th {
-  font: 500 12.5px / 1.4 var(--mono);
+  font: 700 13px / 1.4 var(--sans);
   color: var(--muted);
 }
 
 .compare tbody th {
   width: 22%;
-  padding-left: 0;
-  font-weight: 500;
+  font-weight: 650;
 }
 
 .compare td {
@@ -825,389 +907,234 @@ main:focus {
 }
 
 .compare .compare-us {
-  background: var(--wash);
-  box-shadow: inset 2px 0 0 var(--accent);
+  background: rgba(255, 223, 61, 0.5);
   color: var(--ink);
+  font-weight: 550;
 }
 
 .compare thead .compare-us {
-  color: var(--accent-ink);
+  color: var(--ink);
+  font: 800 20px / 1 var(--display);
+  font-variation-settings: "wdth" 84;
+  letter-spacing: -0.02em;
 }
 
-/* -------------------------------- agents -------------------------------- */
+/* --------------------------------- agents -------------------------------- */
+/* Four luggage tags, each with its hole punched. */
 
 .agents {
-  margin-top: 32px;
-  border-top: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin: 40px 0 20px;
 }
 
 .agents div {
-  display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(0, 2.2fr);
-  gap: 6px 32px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--rule);
+  position: relative;
+  padding: 44px 20px 22px;
+  background: var(--paper);
+  border-radius: 14px 14px 4px 4px;
+  box-shadow: var(--lift);
+}
+
+.agents div::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 16px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--desk);
+  box-shadow: inset 0 1px 2px rgba(17, 19, 21, 0.35);
+}
+
+.agents div:nth-child(odd) {
+  rotate: -0.8deg;
+}
+
+.agents div:nth-child(even) {
+  rotate: 0.7deg;
 }
 
 .agents dt {
-  font-size: 22px;
+  font: 800 21px / 1.1 var(--display);
+  font-variation-settings: "wdth" 86;
+  letter-spacing: -0.02em;
 }
 
-/* --------------------------------- start -------------------------------- */
+.agents dd {
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+/* --------------------------------- starts -------------------------------- */
 
 .starts {
-  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 56px;
   list-style: none;
 }
 
 .starts li {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 22px 22px;
+  background: var(--paper);
+  border-radius: 4px;
+  box-shadow: var(--lift);
+}
+
+.starts li div:first-child {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: 16px 40px;
-  align-items: start;
-  padding: 24px 0;
-  border-top: 1px solid var(--rule);
+  gap: 8px;
 }
 
-.starts p {
-  margin-top: 8px;
-  font-size: 16px;
-}
-
-/* ---------------------------------- faq --------------------------------- */
+/* ----------------------------------- faq --------------------------------- */
 
 .faq {
-  margin-top: 32px;
-}
-
-.faq article {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
-  gap: 8px 40px;
-  padding: 22px 0;
-  border-top: 1px solid var(--rule);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px 56px;
+  margin-top: 56px;
 }
 
 .faq h3 {
-  font-size: 23px;
+  margin-bottom: 10px;
 }
 
-/* -------------------------------- closing ------------------------------- */
+/* --------------------------------- closing ------------------------------- */
+/* The last word, on the biggest sticky note on the desk. */
 
 .closing {
-  margin-top: clamp(80px, 12vw, 160px);
-  padding-top: 40px;
-  border-top: 1px solid var(--ink);
+  position: relative;
+  margin-top: clamp(84px, 11vw, 150px);
+  padding: clamp(32px, 6vw, 72px);
+  rotate: -0.7deg;
+  background: var(--tape);
+  border-radius: 6px 6px 6px 44px;
+  box-shadow: var(--lift);
 }
 
 .closing h2 {
   max-width: 14ch;
-  font-size: clamp(44px, 7vw, 92px);
-  line-height: 0.98;
+  font-size: clamp(40px, 6.6vw, 88px);
+  line-height: 0.9;
 }
 
-.closing > p {
-  margin-top: 18px;
+.closing p {
+  margin-top: 16px;
   font-size: 19px;
-  color: var(--muted);
 }
 
-/* -------------------------------- buttons ------------------------------- */
+.closing .install {
+  rotate: 0.9deg;
+}
+
+.closing .install::before {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* -------------------------------- buttons -------------------------------- */
 
 .button {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: 0 18px;
-  border: 1.5px solid var(--ink);
-  border-radius: 9px;
+  min-height: 46px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
   background: var(--ink);
   color: var(--paper);
-  font: 500 13.5px / 1.2 var(--mono);
+  font: 650 15px / 1 var(--sans);
   text-decoration: none;
-  transition: background 0.16s ease, color 0.16s ease;
+  cursor: pointer;
+  transition: rotate 0.16s ease, translate 0.16s ease;
 }
 
 .button:hover {
-  background: var(--accent);
-  color: var(--ink);
+  rotate: -1.5deg;
+  translate: 0 -1px;
 }
 
 .button-quiet {
-  background: none;
-  color: var(--ink);
-}
-
-.button-quiet:hover {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.chip {
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: var(--ink);
-  color: var(--paper);
-  font: 500 11px / 1.6 var(--mono);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.inline-code {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: var(--ink);
-  color: var(--on-ink);
-  font: 400 12.5px / 1.5 var(--mono);
-}
-
-/* -------------------------------- payoff -------------------------------- */
-/* Where "Send to agent" lands in the playground. */
-
-.payoff {
-  width: min(1080px, 100vw - 24px);
-  max-height: calc(100dvh - 24px);
-  margin: auto;
-  padding: 0;
-  overflow-y: auto;
   background: var(--paper);
   color: var(--ink);
-  border: 1.5px solid var(--ink);
-  border-radius: 16px;
-  box-shadow: 6px 6px 0 var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
 }
 
-.payoff::backdrop {
-  background: rgba(19, 19, 17, 0.62);
-}
-
-.payoff[open] {
-  animation: payoff-in 0.24s var(--ease-out);
-}
-
-@keyframes payoff-in {
-  from {
-    opacity: 0;
-    translate: 0 12px;
-  }
-}
-
-.payoff-sheet {
-  padding: clamp(20px, 4vw, 44px);
-}
-
-.payoff-head {
-  position: relative;
-  padding-right: 120px;
-}
-
-.payoff-head h2 {
-  font: 400 clamp(44px, 6.4vw, 84px) / 0.98 var(--serif);
-  letter-spacing: -0.025em;
-}
-
-.payoff-head p {
-  max-width: 60ch;
-  margin-top: 14px;
-  font-size: 18px;
-  color: var(--muted);
-}
-
-.payoff-close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 7px 12px;
-  border: 1.5px solid var(--ink);
-  border-radius: 8px;
-  background: var(--card);
-  font: 500 12.5px / 1.2 var(--mono);
-}
-
-.payoff-close:hover {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.payoff-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 32px 40px;
-  margin-top: 36px;
-  padding-top: 24px;
-  border-top: 1.5px solid var(--ink);
-}
-
-.payoff-label {
-  margin-bottom: 10px;
-  font: 500 12.5px / 1.5 var(--mono);
-  color: var(--muted);
-}
-
-.terminal {
-  overflow: hidden;
-  border-radius: 12px;
-  background: var(--ink);
-  color: var(--on-ink);
-  font: 400 12px / 1.55 var(--mono);
-}
-
-.terminal-command {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--on-ink-rule);
-  color: var(--accent);
-}
-
-.terminal pre {
-  max-height: 440px;
-  padding: 14px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.next {
-  list-style: none;
-}
-
-.next > li {
-  padding: 14px 0;
-  border-top: 1px solid var(--rule);
-}
-
-.next h3 {
-  font: 400 24px / 1.15 var(--serif);
-}
-
-.next p {
-  margin-top: 4px;
-  font-size: 15px;
-  color: var(--muted);
-}
-
-.counterparts {
-  display: grid;
-  gap: 8px;
-  margin-top: 10px;
-  list-style: none;
-  font-size: 15px;
-}
-
-.counterparts li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 8px;
-}
-
-.counterpart-where {
-  font: 400 12px / 1.5 var(--mono);
-  color: var(--muted);
-}
-
-.counterparts q {
-  flex-basis: 100%;
-  font-family: var(--serif);
-  font-size: 18px;
-}
-
-/* What would happen is drawn dashed, the way reword frames a text not yet saved. */
-.payoff-honest {
-  margin-top: 8px;
-  padding: 12px 14px;
-  border: 1.5px dashed var(--ink);
-  border-radius: 10px;
-  font: 400 13px / 1.5 var(--mono);
-}
-
-.payoff-install,
-.payoff-us {
-  margin-top: 36px;
-  padding-top: 24px;
-  border-top: 1.5px solid var(--ink);
-}
-
-.payoff-install h3,
-.payoff-us h3 {
-  font: 400 clamp(30px, 3.6vw, 44px) / 1.05 var(--serif);
-  letter-spacing: -0.015em;
-}
-
-.payoff-install > p,
-.payoff-us > p {
-  max-width: 62ch;
-  margin-top: 10px;
-  color: var(--muted);
-}
-
-.payoff-us-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.payoff .payoff-note {
-  margin-top: 12px;
-  font: 400 12.5px / 1.5 var(--mono);
-}
-
-/* --------------------------------- pages -------------------------------- */
-/* Writing: the same proof. Dates and the way back in the margin. */
+/* ---------------------------------- pages -------------------------------- */
 
 .page {
-  display: grid;
-  grid-template-columns: var(--margin) minmax(0, 1fr);
-  gap: 0 40px;
-  padding: clamp(48px, 7vw, 96px) 0 0;
+  padding: clamp(40px, 6vw, 80px) 0 0;
 }
 
-.page > * {
-  grid-column: 2;
+.page-margin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  font: 500 13.5px / 1.5 var(--mono);
+  color: var(--muted);
 }
 
-.page > .page-margin {
-  grid-column: 1;
-  grid-row: 1 / span 3;
-  display: grid;
-  align-content: start;
-  gap: 8px;
-  padding-top: 10px;
+.back {
+  color: var(--pen);
+  text-underline-offset: 3px;
 }
 
 .page-title {
-  max-width: 20ch;
+  max-width: 17ch;
+  margin-top: 16px;
+  font-size: clamp(40px, 6.4vw, 84px);
+  line-height: 0.92;
 }
 
-.page .sheet-lede {
-  margin-top: 20px;
-}
-
+/* The list of essays: strips of paper, one under the other. */
 .essay-list {
+  display: grid;
+  gap: 16px;
+  max-width: 860px;
   margin-top: 48px;
   list-style: none;
-  border-top: 1px solid var(--ink);
 }
 
 .essay-list a {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: 6px 24px;
-  padding: 26px 0;
-  border-bottom: 1px solid var(--rule);
+  gap: 8px;
+  padding: 24px 26px;
+  background: var(--paper);
+  border-radius: 4px;
+  box-shadow: var(--lift);
   text-decoration: none;
+  transition: rotate 0.16s ease, translate 0.16s ease;
+}
+
+.essay-list li:nth-child(odd) a {
+  rotate: -0.5deg;
+}
+
+.essay-list li:nth-child(even) a {
+  rotate: 0.4deg;
+}
+
+.essay-list a:hover {
+  rotate: 0deg;
+  translate: 0 -2px;
 }
 
 .essay-list time {
-  grid-row: span 2;
-  padding-top: 6px;
+  font: 500 13px / 1 var(--mono);
+  color: var(--muted);
 }
 
 .essay-list h2 {
-  font: 400 28px / 1.15 var(--serif);
-  letter-spacing: -0.01em;
+  font: 800 30px / 1.05 var(--display);
+  font-variation-settings: "wdth" 84;
+  letter-spacing: -0.03em;
 }
 
 .essay-list p {
@@ -1215,33 +1142,28 @@ main:focus {
   color: var(--muted);
 }
 
-.essay-list a:hover h2 {
-  color: var(--accent-ink);
-}
-
-.back {
-  text-decoration: none;
-}
-
-.back:hover {
-  color: var(--ink);
-}
-
+/* An essay: one sheet of paper, taped at the top, straight so it reads. */
 .prose {
-  max-width: 66ch;
-  margin-top: 48px;
-  font-size: 19px;
-  line-height: 1.65;
+  position: relative;
+  max-width: 780px;
+  margin-top: 52px;
+  padding: clamp(28px, 5vw, 60px);
+  background: var(--paper);
+  border-radius: 4px;
+  box-shadow: var(--lift);
+  font-size: 18.5px;
+  line-height: 1.68;
 }
 
 .prose > * + * {
-  margin-top: 1.15em;
+  margin-top: 1.1em;
 }
 
 .prose h2 {
-  margin-top: 1.9em;
-  font: 400 34px / 1.1 var(--serif);
-  letter-spacing: -0.015em;
+  margin-top: 1.7em;
+  font: 800 32px / 1.05 var(--display);
+  font-variation-settings: "wdth" 84;
+  letter-spacing: -0.03em;
 }
 
 .prose ul {
@@ -1253,31 +1175,30 @@ main:focus {
 }
 
 .prose li::marker {
-  color: var(--accent-ink);
+  color: var(--pen);
 }
 
-.inline-link,
-.prose a {
+.inline-link {
+  color: var(--pen);
   text-decoration: underline;
-  text-decoration-color: var(--accent);
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
 
-.inline-link:hover,
-.prose a:hover {
-  color: var(--accent-ink);
+.inline-link:hover {
+  background: var(--tape);
+  color: var(--ink);
 }
 
-/* -------------------------------- footer -------------------------------- */
+/* --------------------------------- footer -------------------------------- */
 
 .footer {
   display: grid;
-  grid-template-columns: var(--margin) minmax(0, 1fr) auto;
+  grid-template-columns: 180px minmax(0, 1fr) auto;
   gap: 24px 40px;
-  margin-top: clamp(80px, 12vw, 160px);
-  padding: 28px 0 136px; /* room for reword's bar */
-  border-top: 1px solid var(--ink);
+  margin-top: clamp(84px, 11vw, 150px);
+  padding: 30px 0 128px; /* room for reword's bar */
+  border-top: 2.5px solid var(--ink);
   font-size: 15px;
   color: var(--muted);
 }
@@ -1294,35 +1215,262 @@ main:focus {
   display: grid;
   gap: 6px;
   list-style: none;
-  font: 500 13px / 1.5 var(--mono);
+  font-weight: 500;
 }
 
-/* ------------------------------- narrower ------------------------------- */
+.footer-links a {
+  color: var(--ink);
+  text-underline-offset: 3px;
+}
 
-@media (max-width: 899px) {
-  .sheet,
-  .page {
-    grid-template-columns: minmax(0, 1fr);
-  }
+/* --------------------------------- payoff -------------------------------- */
+/* What "Send to agent" opens on this site: a fresh sheet over the desk. */
 
-  .page > *,
-  .page > .page-margin {
-    grid-column: 1;
-    grid-row: auto;
-  }
+.payoff {
+  width: min(1060px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 30px 80px -20px rgba(17, 19, 21, 0.6);
+}
 
-  .page > .page-margin {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 20px;
-    padding: 0 0 24px;
-  }
+.payoff::backdrop {
+  background: rgba(17, 19, 21, 0.6);
+}
 
+.payoff-sheet {
+  display: grid;
+  gap: 40px;
+  max-height: calc(100dvh - 24px);
+  padding: clamp(24px, 4.4vw, 52px);
+  overflow-y: auto;
+}
+
+.payoff-head {
+  position: relative;
+  padding-right: 130px;
+}
+
+.payoff-head h2 {
+  font-size: clamp(40px, 6vw, 80px);
+  line-height: 0.9;
+}
+
+.payoff-head p,
+.payoff-install > p,
+.payoff-us > p {
+  max-width: 58ch;
+  margin-top: 14px;
+  font-size: 18.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.payoff-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  font: 650 14px / 1 var(--sans);
+  cursor: pointer;
+}
+
+.payoff-close:hover {
+  background: var(--tape);
+}
+
+.payoff-install {
+  padding-top: 34px;
+  border-top: 2px dashed var(--hair);
+}
+
+.payoff-install h3 {
+  font-size: clamp(28px, 3.6vw, 40px);
+}
+
+.payoff-install .install {
+  margin-top: 30px;
+}
+
+.payoff-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 36px;
+  padding-top: 34px;
+  border-top: 2px dashed var(--hair);
+}
+
+.payoff-label {
+  font: 600 13px / 1.5 var(--mono);
+  color: var(--muted);
+}
+
+.terminal {
+  margin-top: 14px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 500 12.5px / 1.6 var(--mono);
+}
+
+.terminal-command {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--tape);
+  font-weight: 700;
+}
+
+.terminal pre {
+  max-height: 340px;
+  padding: 14px 16px 16px;
+  overflow: auto;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.next {
+  display: grid;
+  gap: 22px;
+  margin-top: 16px;
+  list-style: none;
+  counter-reset: next;
+}
+
+.next > li {
+  position: relative;
+  padding-left: 46px;
+  counter-increment: next;
+}
+
+.next > li::before {
+  content: counter(next);
+  position: absolute;
+  left: 0;
+  top: -3px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  rotate: -6deg;
+  border-radius: 50%;
+  background: var(--tape);
+  font: 800 17px / 1 var(--display);
+}
+
+.next p {
+  margin-top: 6px;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.counterparts {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  list-style: none;
+}
+
+.counterparts li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 10px;
+  align-items: center;
+}
+
+.chip {
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 11px / 1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.counterpart-where {
+  font: 500 12.5px / 1 var(--mono);
+  color: var(--muted);
+}
+
+.counterparts q {
+  grid-column: 1 / -1;
+  padding-left: 12px;
+  border-left: 3px solid var(--pen);
+  font-size: 15.5px;
+  line-height: 1.45;
+}
+
+.inline-code {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: var(--desk);
+  font: 600 13px / 1.5 var(--mono);
+}
+
+.payoff-honest,
+.payoff-note {
+  margin-top: 18px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* "Send this edit to us": a sticky note at the foot of the sheet. */
+.payoff-us {
+  rotate: -0.5deg;
+  padding: clamp(22px, 3vw, 34px);
+  background: var(--tape);
+  border-radius: 6px 6px 6px 30px;
+}
+
+.payoff-us > p,
+.payoff-us .payoff-note {
+  color: var(--ink);
+}
+
+.payoff-us-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* -------------------------------- narrower ------------------------------- */
+
+@media (max-width: 1000px) {
+  .loop,
   .facts,
-  .starts li,
-  .faq article,
+  .starts,
+  .faq,
   .payoff-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .loop {
+    gap: 44px;
+  }
+
+  .loop li:nth-child(2) {
+    translate: none;
+  }
+
+  .agents {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .footer {
@@ -1334,46 +1482,36 @@ main:focus {
   }
 }
 
-@media (max-width: 600px) {
-  .loop li,
-  .agents div,
-  .essay-list a {
+@media (max-width: 560px) {
+  .agents {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .loop h3 {
-    font-size: 36px;
-  }
-
-  .install-head {
-    padding: 10px;
-  }
-
-  .install-ways {
-    width: 100%;
-  }
-
-  .install-ways button {
-    flex: 1;
-    padding: 6px;
   }
 
   .install-command {
     flex-direction: column;
-    align-items: stretch;
   }
 
   .payoff-head {
     padding-right: 0;
-    padding-top: 48px;
+    padding-top: 52px;
+  }
+
+  /* Small screens keep the pieces straight: a tilt eats the margin. */
+  .install,
+  .ticket,
+  .tree,
+  .rule,
+  .closing,
+  .payoff-us,
+  .loop li:nth-child(n),
+  .agents div:nth-child(n),
+  .essay-list li:nth-child(n) a {
+    rotate: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  * {
     transition: none !important;
-    animation: none !important;
   }
 }

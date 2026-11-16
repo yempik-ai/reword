@@ -6,20 +6,17 @@ import { PUBLISH_PROMPT } from "@/reword/draft";
 import CopyButton from "./CopyButton";
 import InstallBox from "./InstallBox";
 import { live, LiveDesk, LiveTypo } from "./Live";
-import { Caret } from "./Wordmark";
+import { Scribble } from "./Wordmark";
 
-// The home page, set like a proof: the text on the right, the proofreader's
-// notes in the margin on the left. Every string comes from content/home.ts
-// and is rendered untouched: that is what makes it editable on the page.
+// The home page: a desk with things stuck on it. Every string comes from
+// content/home.ts and is rendered untouched: that is what makes it editable
+// on the page.
 
-/** A section of the proof: its name in the margin, its text beside it. */
+/** A section: its name off a label maker, then its text. */
 function Sheet({ id, label, title, children }: { id: string; label: string; title: string; children: React.ReactNode }) {
   return (
     <section className="sheet" id={id} aria-labelledby={`${id}-title`}>
-      <p className="sheet-label">
-        <span aria-hidden="true">¶ </span>
-        {label}
-      </p>
+      <p className="sheet-label">{label}</p>
       <div className="sheet-body">
         <h2 id={`${id}-title`}>{title}</h2>
         {children}
@@ -51,14 +48,14 @@ export default function Home({ c, locale }: { c: HomeContent; locale: Locale }) 
         <div className="hero-main">
           {live ? (
             <p className="hero-invite">
-              <Caret className="invite-caret" />
+              <Scribble className="invite-caret" />
               {c.hero.invite}
             </p>
           ) : (
             <p className="kicker">{c.hero.kicker}</p>
           )}
           <h1 id="hero-title" className="hero-title">
-            {/* The struck word is the joke, not the sentence: a screen reader gets the corrected line. */}
+            {/* The old word under the sticker is the joke, not the sentence: a screen reader gets the corrected line. */}
             <span>{c.hero.before}</span> <del aria-hidden="true">{c.hero.struck}</del>{" "}
             <ins>{c.hero.inserted}</ins> <span>{c.hero.after}</span>
           </h1>

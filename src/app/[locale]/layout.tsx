@@ -18,12 +18,11 @@ import "../globals.css";
 // each family after its constant, so the constants carry the fonts' names.
 const geist = localFont({ src: "../fonts/geist-latin-wght-normal.woff2", weight: "100 900", variable: "--font-sans" });
 const geistMono = localFont({ src: "../fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-mono" });
-const instrumentSerif = localFont({
-  src: [
-    { path: "../fonts/instrument-serif-latin-400-normal.woff2", weight: "400", style: "normal" },
-    { path: "../fonts/instrument-serif-latin-400-italic.woff2", weight: "400", style: "italic" },
-  ],
-  variable: "--font-serif",
+// The display face has two axes: weight and width. The headline uses both.
+const bricolage = localFont({
+  src: "../fonts/bricolage-grotesque-latin-wdth-normal.woff2",
+  weight: "200 800",
+  variable: "--font-display",
 });
 
 export const dynamicParams = false;
@@ -34,7 +33,7 @@ export function generateStaticParams() {
 
 type Params = { params: Promise<{ locale: string }> };
 
-export const viewport: Viewport = { themeColor: "#f6f2e9" };
+export const viewport: Viewport = { themeColor: "#e7e9ec" };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale } = await params;
@@ -92,7 +91,7 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   return (
-    <html lang={locale} className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}>
+    <html lang={locale} className={`${geist.variable} ${geistMono.variable} ${bricolage.variable}`}>
       <body>
         <JsonLd data={jsonLd(home[locale].meta.description)} />
         <a href="#main" className="skip">

@@ -1,21 +1,22 @@
 /* ---------------------------------------------------------------------------
    reword's own interface (`npm run edit` only). Imported by Reword.tsx, so it
    ships with that chunk and never reaches a production build. It brings its
-   own look, so it reads the same on any site: a dark bar with mono labels (a
-   devtool) and a paper sheet set in serif (a proof). Change the variables
-   below to restyle it.
+   own look, so it reads the same on any site: a dark bar, a white sheet, and
+   one colour for everything you put in, the yellow of a highlighter. It uses
+   the fonts of the system. Change the variables below to restyle it.
 --------------------------------------------------------------------------- */
 
 .rw-bar,
 .rw-sheet {
-  --rw-ink: #121210;
-  --rw-paper: #f7f4ec;
-  --rw-accent: #ff5433;
-  --rw-accent-ink: #c8321a; /* the accent as text on paper */
-  --rw-dim: rgba(247, 244, 236, 0.62);
-  --rw-rule: rgba(247, 244, 236, 0.16);
+  --rw-ink: #111315;
+  --rw-paper: #ffffff;
+  --rw-accent: #ffdf3d; /* what you put in */
+  --rw-strike: #c4211a; /* what you took out, on paper */
+  --rw-refused: #ff9086; /* a refusal, on the dark bar */
+  --rw-dim: rgba(255, 255, 255, 0.66);
+  --rw-rule: rgba(255, 255, 255, 0.16);
+  --rw-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --rw-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
-  --rw-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
 }
 
 /* ------------------------------- the bar -------------------------------- */
@@ -31,11 +32,10 @@
   overflow: hidden;
   background: var(--rw-ink);
   color: var(--rw-paper);
-  border: 1px solid rgba(247, 244, 236, 0.22);
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-  font: 500 12px / 1.4 var(--rw-mono);
-  letter-spacing: 0.01em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  font: 500 13px / 1.4 var(--rw-sans);
   text-align: left;
 }
 
@@ -46,9 +46,13 @@
   cursor: pointer;
 }
 
-.rw-bar :focus-visible,
-.rw-sheet :focus-visible {
+.rw-bar :focus-visible {
   outline: 2px solid var(--rw-accent);
+  outline-offset: 2px;
+}
+
+.rw-sheet :focus-visible {
+  outline: 2px solid var(--rw-ink);
   outline-offset: 2px;
 }
 
@@ -62,7 +66,7 @@
 .rw-mode {
   display: flex;
   padding: 2px;
-  background: rgba(247, 244, 236, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
 }
 
@@ -109,7 +113,7 @@
 
 .rw-review:disabled,
 .rw-send:disabled {
-  background: rgba(247, 244, 236, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--rw-dim);
   cursor: default;
 }
@@ -125,6 +129,15 @@
 
 .rw-session p {
   margin: 0;
+}
+
+/* Where the text lives in the source: the one thing set in mono. */
+.rw-where,
+.rw-place,
+.rw-locale,
+.rw-change-where {
+  font-family: var(--rw-mono);
+  font-size: 12px;
 }
 
 .rw-where {
@@ -148,7 +161,8 @@
 }
 
 .rw-error {
-  color: var(--rw-accent);
+  color: var(--rw-refused);
+  font-weight: 600;
 }
 
 .rw-places {
@@ -181,15 +195,14 @@
 
 /* ------------------------------ on the page ------------------------------ */
 
+/* The text under the pointer, gone over with a highlighter. */
 ::highlight(reword-hover) {
-  background-color: rgba(255, 84, 51, 0.3);
+  background-color: rgba(255, 223, 61, 0.7);
 }
 
 /* The playground's Browse mode: a quieter mark, the page stays a page. */
 ::highlight(reword-hint) {
-  text-decoration: underline dotted rgba(255, 84, 51, 0.9);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.18em;
+  background-color: rgba(255, 223, 61, 0.42);
 }
 
 html[data-reword-hover],
@@ -205,7 +218,7 @@ html[data-reword-hover] * {
 [data-reword="surface"] {
   white-space: pre-wrap;
   cursor: text;
-  background: rgba(255, 84, 51, 0.16);
+  background: rgba(255, 223, 61, 0.42);
 }
 
 /* The frame is on the block: the site's own focus ring would draw a second one. */
@@ -220,7 +233,7 @@ html[data-reword-hover] * {
 }
 
 [data-reword-editing]:has([data-invalid]) {
-  outline: 2px solid #ff5433;
+  outline: 2px solid #d42a22;
 }
 
 /* --------------------------- the review sheet ---------------------------- */
@@ -231,17 +244,17 @@ html[data-reword-hover] * {
   margin: auto;
   padding: 0;
   overflow: hidden;
-  background: #fbf9f4;
+  background: #ffffff;
   color: var(--rw-ink);
   border: 1px solid var(--rw-ink);
   border-radius: 14px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
-  font: 400 12px / 1.5 var(--rw-mono);
+  font: 400 13.5px / 1.5 var(--rw-sans);
   text-align: left;
 }
 
 .rw-sheet::backdrop {
-  background: rgba(18, 18, 16, 0.55);
+  background: rgba(17, 19, 21, 0.55);
 }
 
 .rw-sheet-inner {
@@ -260,23 +273,23 @@ html[data-reword-hover] * {
 }
 
 .rw-sheet-head {
-  border-bottom: 1px solid rgba(18, 18, 16, 0.12);
+  border-bottom: 1px solid rgba(17, 19, 21, 0.12);
 }
 
 .rw-sheet-foot {
   border-top: 1px solid var(--rw-ink);
-  background: #f3efe5;
+  background: #f2f3f5;
 }
 
 .rw-sheet-title {
   margin: 0;
-  font: italic 400 26px / 1.1 var(--rw-serif);
-  letter-spacing: -0.01em;
+  font: 700 22px / 1.1 var(--rw-sans);
+  letter-spacing: -0.02em;
 }
 
 .rw-meta {
   margin: 0;
-  color: rgba(18, 18, 16, 0.66);
+  color: rgba(17, 19, 21, 0.66);
 }
 
 .rw-sheet-title + .rw-meta {
@@ -299,7 +312,7 @@ html[data-reword-hover] * {
 }
 
 .rw-change + .rw-change {
-  border-top: 1px solid rgba(18, 18, 16, 0.12);
+  border-top: 1px solid rgba(17, 19, 21, 0.12);
 }
 
 .rw-change-head {
@@ -319,14 +332,14 @@ html[data-reword-hover] * {
 
 .rw-change-where {
   flex: 1;
-  color: rgba(18, 18, 16, 0.66);
+  color: rgba(17, 19, 21, 0.66);
   overflow-wrap: anywhere;
 }
 
 .rw-small {
   flex: none;
   padding: 5px 10px;
-  border: 1px solid rgba(18, 18, 16, 0.3);
+  border: 1px solid rgba(17, 19, 21, 0.3);
   border-radius: 7px;
   background: none;
   color: var(--rw-ink);
@@ -342,21 +355,21 @@ html[data-reword-hover] * {
   cursor: default;
 }
 
-/* The proof itself is set in serif: this is the part you read. */
+/* The edit itself: the part you read. */
 .rw-diff {
   margin: 12px 0 0;
-  font: 400 17px / 1.6 var(--rw-serif);
+  font: 400 16.5px / 1.6 var(--rw-sans);
   white-space: pre-wrap;
 }
 
 .rw-diff del {
-  color: rgba(18, 18, 16, 0.5);
+  color: rgba(17, 19, 21, 0.5);
   text-decoration: line-through;
-  text-decoration-color: var(--rw-accent-ink);
+  text-decoration-color: var(--rw-strike);
 }
 
 .rw-diff ins {
-  background: rgba(255, 84, 51, 0.2);
+  background: rgba(255, 223, 61, 0.75);
   text-decoration: none;
 }
 
@@ -366,12 +379,12 @@ html[data-reword-hover] * {
 
 .rw-change-next {
   margin: 10px 0 0;
-  color: rgba(18, 18, 16, 0.6);
+  color: rgba(17, 19, 21, 0.6);
 }
 
 .rw-other {
   padding: 14px 0;
-  border-top: 1px solid rgba(18, 18, 16, 0.12);
+  border-top: 1px solid rgba(17, 19, 21, 0.12);
 }
 
 .rw-sheet-foot .rw-send {
@@ -379,8 +392,8 @@ html[data-reword-hover] * {
 }
 
 .rw-sheet-foot .rw-send:disabled {
-  background: rgba(18, 18, 16, 0.08);
-  color: rgba(18, 18, 16, 0.5);
+  background: rgba(17, 19, 21, 0.08);
+  color: rgba(17, 19, 21, 0.5);
 }
 
 .rw-manual {

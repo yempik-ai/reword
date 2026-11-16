@@ -54,7 +54,7 @@ You already know what you want to say. Typing it is faster than describing it. W
 
 | Edit in place, on the live site | Press Send, get the way to install it |
 |---|---|
-| ![The word "clicking" in the headline is being retyped as "typing" in the headline's own typography. Beside it, a dark panel shows the change to home.ts line 71 as a diff while it is typed](media/edit.png) | ![A sheet titled "You just used reword." It gives the one sentence to paste into a coding agent, then the brief built from the visitor's own edits](media/payoff.png) |
+| ![The word "clicking" in the headline is being retyped as "typing" in the headline's own typography. The new word sits on a yellow sticker over the old one, and beside it a paper receipt prints the change to home.ts line 71 as a diff while it is typed](media/edit.png) | ![A sheet titled "You just used reword." It gives the one sentence to paste into a coding agent, then the brief built from the visitor's own edits](media/payoff.png) |
 
 ## Quick start
 

@@ -1,7 +1,7 @@
 import type { Locale } from "./site";
 
 // ---------------------------------------------------------------------------
-// The playground's copy: the proof ticket that dares the visitor to use the
+// The playground's copy: the card that dares the visitor to use the
 // editor, the live draft beside it, and the ending that "Send to agent"
 // opens. Shown only where reword is on the page (the playground build, and
 // `npm run edit`). Ticket ids are structure: they say which interaction
