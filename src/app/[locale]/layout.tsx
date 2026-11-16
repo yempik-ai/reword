@@ -14,10 +14,11 @@ import RewordMount from "@/reword/Mount";
 import "../globals.css";
 
 // The fonts are in the repository (src/app/fonts, SIL Open Font License), so
-// the dev server and the build never wait on a font service.
-const sans = localFont({ src: "../fonts/geist-latin-wght-normal.woff2", weight: "100 900", variable: "--font-sans" });
-const mono = localFont({ src: "../fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-mono" });
-const serif = localFont({
+// the dev server and the build never wait on a font service. next/font names
+// each family after its constant, so the constants carry the fonts' names.
+const geist = localFont({ src: "../fonts/geist-latin-wght-normal.woff2", weight: "100 900", variable: "--font-sans" });
+const geistMono = localFont({ src: "../fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-mono" });
+const instrumentSerif = localFont({
   src: [
     { path: "../fonts/instrument-serif-latin-400-normal.woff2", weight: "400", style: "normal" },
     { path: "../fonts/instrument-serif-latin-400-italic.woff2", weight: "400", style: "italic" },
@@ -91,7 +92,7 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   return (
-    <html lang={locale} className={`${sans.variable} ${mono.variable} ${serif.variable}`}>
+    <html lang={locale} className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}>
       <body>
         <JsonLd data={jsonLd(home[locale].meta.description)} />
         <a href="#main" className="skip">
